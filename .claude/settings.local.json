@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-Content ''d:\\misc\\attachments\\zjulife_flutter\\lib\\screens\\profile\\profile_screen.dart''\")",
+      "Bash(python:*)"
+    ]
+  }
+}
