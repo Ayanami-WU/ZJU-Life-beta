@@ -8,12 +8,17 @@ class AuthProvider extends ChangeNotifier {
   String? _userName;
   String? _casTicket;
   String? _authCookie;
+  String? _libraryJwt;
   
   bool get isAuthenticated => _isAuthenticated;
   String? get userId => _userId;
   String? get userName => _userName;
   String? get casTicket => _casTicket;
   String? get authCookie => _authCookie;
+
+  /// 图书馆预约系统 JWT Token
+  String? get libraryJwt => _libraryJwt;
+  bool get hasLibraryJwt => _libraryJwt != null && _libraryJwt!.isNotEmpty;
   
   AuthProvider() {
     _loadAuthState();
@@ -25,6 +30,7 @@ class AuthProvider extends ChangeNotifier {
     _userId = prefs.getString('user_id');
     _userName = prefs.getString('user_name');
     _authCookie = prefs.getString('auth_cookie');
+    _libraryJwt = prefs.getString('library_jwt');
     notifyListeners();
   }
   
@@ -59,6 +65,22 @@ class AuthProvider extends ChangeNotifier {
     await prefs.setString('auth_cookie', cookie);
     notifyListeners();
   }
+
+  /// 更新图书馆 JWT Token
+  Future<void> updateLibraryJwt(String jwt) async {
+    _libraryJwt = jwt;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('library_jwt', jwt);
+    notifyListeners();
+  }
+
+  /// 清除图书馆 JWT Token
+  Future<void> clearLibraryJwt() async {
+    _libraryJwt = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('library_jwt');
+    notifyListeners();
+  }
   
   Future<void> logout() async {
     _isAuthenticated = false;
@@ -66,12 +88,14 @@ class AuthProvider extends ChangeNotifier {
     _userName = null;
     _casTicket = null;
     _authCookie = null;
+    _libraryJwt = null;
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('is_authenticated');
     await prefs.remove('user_id');
     await prefs.remove('user_name');
     await prefs.remove('auth_cookie');
+    await prefs.remove('library_jwt');
     
     notifyListeners();
   }

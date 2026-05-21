@@ -202,21 +202,21 @@ class ExportService {
     final buffer = StringBuffer();
 
     // CSV 头部
-    buffer.writeln('建筑,房间,楼层,总座位数,可用座位数,占用率');
+    buffer.writeln('建筑,房间,楼层,总座位数,空闲座位数,占用率');
 
     // 数据行
     for (final seat in seats) {
-      final occupancyRate = seat.totalSeats > 0
-          ? ((seat.totalSeats - seat.availableSeats) / seat.totalSeats * 100)
+      final occupancyRate = seat.totalNum > 0
+          ? ((seat.totalNum - seat.freeNum) / seat.totalNum * 100)
               .toStringAsFixed(1)
           : '0.0';
 
       buffer.writeln(_csvRow([
-        seat.buildingName,
-        seat.roomName,
-        seat.floor ?? '',
-        seat.totalSeats.toString(),
-        seat.availableSeats.toString(),
+        seat.premisesName,
+        seat.name,
+        seat.storeyName,
+        seat.totalNum.toString(),
+        seat.freeNum.toString(),
         '$occupancyRate%',
       ]));
     }

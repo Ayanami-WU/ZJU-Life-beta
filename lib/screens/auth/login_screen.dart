@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
@@ -49,8 +49,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (result.success) {
-        // 保存认证状态
-        await context.read<AuthProvider>().loginWithCas(
+        final authProvider = context.read<AuthProvider>();
+        await authProvider.loginWithCas(
           userId: result.userId,
           userName: result.userName,
           cookie: result.cookie,
@@ -58,7 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (!mounted) return;
 
-        // 显示成功提示
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Row(
@@ -71,12 +70,23 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
 
-        // 返回首页
         context.go('/');
+
+        // 后台自动获取图书馆 JWT（不阻塞主流程）
+        if (result.cookie != null) {
+          AuthService.instance
+              .getLibraryJwt(result.cookie!)
+              .then((jwt) async {
+            if (jwt != null && jwt.isNotEmpty) {
+              await authProvider.updateLibraryJwt(jwt);
+            }
+          });
+        }
       }
     } on AuthException catch (e) {
       setState(() {
