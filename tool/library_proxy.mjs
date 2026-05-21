@@ -1039,6 +1039,76 @@ function forwardCanteen(path, res) {
   proxyReq.end();
 }
 
+function forwardLibraryImage(url, res) {
+  let targetUrl;
+  try {
+    targetUrl = new URL(url);
+  } catch {
+    send(
+      res,
+      400,
+      JSON.stringify({
+        code: 400,
+        message: 'Invalid image URL',
+      }),
+    );
+    return;
+  }
+
+  if (targetUrl.protocol !== 'https:' || targetUrl.hostname !== targetHost) {
+    send(
+      res,
+      403,
+      JSON.stringify({
+        code: 403,
+        message: 'Only booking.lib.zju.edu.cn images are proxied',
+      }),
+    );
+    return;
+  }
+
+  const proxyReq = https.request(
+    {
+      hostname: targetHost,
+      path: `${targetUrl.pathname}${targetUrl.search}`,
+      method: 'GET',
+      headers: {
+        Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'User-Agent':
+          'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        Referer: `${targetOrigin}/h5/index.html`,
+      },
+      timeout: 20000,
+    },
+    (proxyRes) => {
+      const chunks = [];
+      proxyRes.on('data', (chunk) => chunks.push(chunk));
+      proxyRes.on('end', () => {
+        send(res, proxyRes.statusCode || 502, Buffer.concat(chunks), {
+          'Content-Type': proxyRes.headers['content-type'] || 'image/png',
+          'Cache-Control':
+            proxyRes.headers['cache-control'] || 'public, max-age=86400',
+        });
+      });
+    },
+  );
+
+  proxyReq.on('timeout', () => {
+    proxyReq.destroy(new Error('Upstream request timed out'));
+  });
+  proxyReq.on('error', (error) => {
+    send(
+      res,
+      502,
+      JSON.stringify({
+        code: 502,
+        message: `Library image proxy failed: ${error.message}`,
+      }),
+    );
+  });
+  proxyReq.end();
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     send(res, 204, '');
@@ -1068,6 +1138,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === 'GET' && url.pathname === '/library-image') {
+    forwardLibraryImage(url.searchParams.get('url') || '', res);
+    return;
+  }
+
   const proxiedPrefix =
     url.pathname.startsWith('/api/') || url.pathname.startsWith('/reserve/');
   if (req.method !== 'POST' || !proxiedPrefix) {
@@ -1077,7 +1152,7 @@ const server = http.createServer(async (req, res) => {
       JSON.stringify({
         code: 404,
         message:
-          'Only POST /api/*, POST /reserve/*, and GET /canteen/general_new.php are proxied',
+          'Only POST /api/*, POST /reserve/*, GET /library-image, and GET /canteen/general_new.php are proxied',
       }),
     );
     return;

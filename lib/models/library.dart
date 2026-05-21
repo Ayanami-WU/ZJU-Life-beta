@@ -170,6 +170,7 @@ class LibrarySeatDetail {
   final String area;
   final String status;
   final String statusName;
+  final String inLabel;
   final String? areaName;
   final double? pointX;
   final double? pointY;
@@ -183,6 +184,7 @@ class LibrarySeatDetail {
     required this.area,
     required this.status,
     required this.statusName,
+    this.inLabel = '1',
     this.areaName,
     this.pointX,
     this.pointY,
@@ -198,6 +200,7 @@ class LibrarySeatDetail {
       area: json['area']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       statusName: json['status_name']?.toString() ?? '',
+      inLabel: json['in_label']?.toString() ?? '1',
       areaName: json['area_name']?.toString(),
       pointX: _parseDouble(json['point_x']),
       pointY: _parseDouble(json['point_y']),
@@ -208,7 +211,12 @@ class LibrarySeatDetail {
 
   bool get hasPoint => pointX != null && pointY != null;
 
+  bool get hasMapRect =>
+      hasPoint && width != null && height != null && width! > 0 && height! > 0;
+
   bool get isFree => status == '1' || statusName == '空闲';
+
+  bool get isInLabel => inLabel == '1';
 
   String get displayName {
     if (no.isNotEmpty) return no;
@@ -226,6 +234,7 @@ class LibrarySeatDetail {
         'area': area,
         'status': status,
         'status_name': statusName,
+        'in_label': inLabel,
         'area_name': areaName,
         'point_x': pointX,
         'point_y': pointY,
@@ -245,30 +254,87 @@ class LibrarySeatDetail {
 class LibraryRoomMap {
   final String? config;
   final String? free;
+  final String? leave;
+  final String? book;
+  final String? use;
+  final String? close;
+  final String? notAvailable;
   final String? imageUrl;
+  final double? width;
+  final double? height;
 
-  const LibraryRoomMap({this.config, this.free, this.imageUrl});
+  const LibraryRoomMap({
+    this.config,
+    this.free,
+    this.leave,
+    this.book,
+    this.use,
+    this.close,
+    this.notAvailable,
+    this.imageUrl,
+    this.width,
+    this.height,
+  });
 
   factory LibraryRoomMap.fromJson(Map<String, dynamic> json) {
     return LibraryRoomMap(
       config: json['config']?.toString(),
       free: json['free']?.toString(),
+      leave: json['leave']?.toString(),
+      book: json['book']?.toString(),
+      use: json['use']?.toString(),
+      close: json['close']?.toString(),
+      notAvailable: json['not']?.toString(),
       imageUrl: json['image_url']?.toString(),
+      width: _parseDouble(json['width']),
+      height: _parseDouble(json['height']),
     );
   }
 
   String? get preferredImageUrl =>
       _nonEmpty(config) ?? _nonEmpty(free) ?? _nonEmpty(imageUrl);
 
+  /// 官方 H5 的地图模式以 free 图作为整张平面底图。
+  String? get floorPlanImageUrl =>
+      _nonEmpty(free) ?? _nonEmpty(config) ?? _nonEmpty(imageUrl);
+
+  bool get hasNaturalSize =>
+      width != null && height != null && width! > 0 && height! > 0;
+
+  String? imageForSeat(LibrarySeatDetail seat) {
+    final normalizedStatus = int.tryParse(seat.status);
+    if (!seat.isInLabel) return _nonEmpty(notAvailable);
+    if (normalizedStatus == 1) return _nonEmpty(free);
+    if (normalizedStatus == 7) return _nonEmpty(leave);
+    if ({2, 10, 11}.contains(normalizedStatus)) return _nonEmpty(book);
+    if ({6, 8, 9}.contains(normalizedStatus)) return _nonEmpty(use);
+    if ({3, 4, 5}.contains(normalizedStatus)) return _nonEmpty(close);
+    return null;
+  }
+
   Map<String, dynamic> toJson() => {
         'config': config,
         'free': free,
+        'leave': leave,
+        'book': book,
+        'use': use,
+        'close': close,
+        'not': notAvailable,
         'image_url': imageUrl,
+        'width': width,
+        'height': height,
       };
 
   static String? _nonEmpty(String? value) {
     if (value == null || value.isEmpty) return null;
     return value;
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 }
 
@@ -289,7 +355,7 @@ class LibraryRoomDetail {
   int get freeNum => seats.where((seat) => seat.isFree).length;
 
   bool get hasMap =>
-      map.preferredImageUrl != null && seats.any((seat) => seat.hasPoint);
+      map.floorPlanImageUrl != null && seats.any((seat) => seat.hasPoint);
 
   Map<String, int> get statusCounts {
     final counts = <String, int>{};

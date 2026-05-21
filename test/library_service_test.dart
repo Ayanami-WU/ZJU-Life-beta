@@ -160,6 +160,60 @@ void main() {
       );
     });
 
+    test('uses official floor plan and status image rules', () {
+      const map = LibraryRoomMap(
+        config: 'config.png',
+        free: 'free.png',
+        leave: 'leave.png',
+        book: 'book.png',
+        use: 'use.png',
+        close: 'close.png',
+        notAvailable: 'not.png',
+      );
+
+      expect(map.floorPlanImageUrl, 'free.png');
+      expect(
+        map.imageForSeat(
+          const LibrarySeatDetail(
+            id: '1',
+            no: '001',
+            name: '001',
+            area: 'room-1',
+            status: '1',
+            statusName: '空闲',
+          ),
+        ),
+        'free.png',
+      );
+      expect(
+        map.imageForSeat(
+          const LibrarySeatDetail(
+            id: '2',
+            no: '002',
+            name: '002',
+            area: 'room-1',
+            status: '8',
+            statusName: '使用中',
+          ),
+        ),
+        'use.png',
+      );
+      expect(
+        map.imageForSeat(
+          const LibrarySeatDetail(
+            id: '3',
+            no: '003',
+            name: '003',
+            area: 'room-1',
+            status: '1',
+            statusName: '空闲',
+            inLabel: '0',
+          ),
+        ),
+        'not.png',
+      );
+    });
+
     test('keeps unknown status labels displayable', () {
       final seat = LibrarySeatDetail.fromJson({
         'id': '9',

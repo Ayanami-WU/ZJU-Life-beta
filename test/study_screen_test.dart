@@ -50,17 +50,22 @@ void main() {
     await tester.tap(find.text('阅览室 A'));
     await tester.pumpAndSettle();
 
-    expect(find.text('暂无可用地图，已切换为座位列表'), findsOneWidget);
     expect(find.text('001'), findsOneWidget);
+    expect(find.text('002'), findsOneWidget);
     expect(find.text('空闲'), findsWidgets);
   });
 
-  testWidgets('Room page renders map viewer and seat points with a map', (
+  testWidgets('Room page renders readable grid, preview, and map mode', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
     final service = _FakeLibraryService(
-      map: const LibraryRoomMap(config: 'https://example.com/map.png'),
+      map: const LibraryRoomMap(
+        free: 'https://example.com/free.png',
+        use: 'https://example.com/use.png',
+        width: 100,
+        height: 100,
+      ),
     );
     final router = _buildRouter(
       service: service,
@@ -68,6 +73,20 @@ void main() {
     );
 
     await tester.pumpWidget(_TestApp(router: router));
+    await tester.pumpAndSettle();
+
+    expect(find.text('座位格'), findsOneWidget);
+    expect(find.text('平面图'), findsOneWidget);
+    expect(find.text('001'), findsOneWidget);
+    expect(find.text('002'), findsOneWidget);
+
+    await tester.tap(find.text('001'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('座位 001'), findsOneWidget);
+    expect(find.text('空闲'), findsWidgets);
+
+    await tester.tap(find.text('平面图'));
     await tester.pumpAndSettle();
 
     expect(find.byType(InteractiveViewer), findsOneWidget);
@@ -139,6 +158,8 @@ class _FakeLibraryService extends LibraryService {
       statusName: '空闲',
       pointX: 20,
       pointY: 30,
+      width: 8,
+      height: 6,
     ),
     LibrarySeatDetail(
       id: '2',
@@ -149,6 +170,8 @@ class _FakeLibraryService extends LibraryService {
       statusName: '占用',
       pointX: 60,
       pointY: 45,
+      width: 8,
+      height: 6,
     ),
   ];
 

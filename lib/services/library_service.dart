@@ -260,9 +260,16 @@ class LibraryService {
           );
 
     return LibraryRoomMap(
-      config: _absoluteUrl(mapData.config),
-      free: _absoluteUrl(mapData.free),
-      imageUrl: _absoluteUrl(mapData.imageUrl ?? room.imageUrl),
+      config: _libraryImageUrl(mapData.config),
+      free: _libraryImageUrl(mapData.free),
+      leave: _libraryImageUrl(mapData.leave),
+      book: _libraryImageUrl(mapData.book),
+      use: _libraryImageUrl(mapData.use),
+      close: _libraryImageUrl(mapData.close),
+      notAvailable: _libraryImageUrl(mapData.notAvailable),
+      imageUrl: _libraryImageUrl(mapData.imageUrl ?? room.imageUrl),
+      width: mapData.width,
+      height: mapData.height,
     );
   }
 
@@ -463,6 +470,13 @@ class LibraryService {
     if (uri.hasScheme) return value;
     if (value.startsWith('/')) return '$_bookingBaseUrl$value';
     return '$_bookingBaseUrl/$value';
+  }
+
+  static String? _libraryImageUrl(String? value) {
+    final absoluteUrl = _absoluteUrl(value);
+    if (absoluteUrl == null || !kIsWeb) return absoluteUrl;
+    final encodedUrl = Uri.encodeQueryComponent(absoluteUrl);
+    return '$_apiBaseUrl/library-image?url=$encodedUrl';
   }
 }
 
