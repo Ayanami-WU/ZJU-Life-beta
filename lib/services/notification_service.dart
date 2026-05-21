@@ -6,9 +6,9 @@ import 'bus_utils.dart';
 
 /// 通知类型
 enum NotificationType {
-  busReminder,      // 班车发车提醒
-  canteenAlert,     // 食堂拥挤预警
-  libraryAlert,     // 图书馆座位提醒
+  busReminder, // 班车发车提醒
+  canteenAlert, // 食堂拥挤预警
+  libraryAlert, // 图书馆座位提醒
 }
 
 /// 本地通知服务
@@ -37,7 +37,8 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation('Asia/Shanghai'));
 
     // Android 配置
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS 配置
     const iosSettings = DarwinInitializationSettings(
@@ -64,18 +65,16 @@ class NotificationService {
     await initialize();
 
     // Android 13+ 需要请求权限
-    final android = _notifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final android = _notifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
       final granted = await android.requestNotificationsPermission();
       return granted ?? false;
     }
 
     // iOS 请求权限
-    final ios = _notifications
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+    final ios = _notifications.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
     if (ios != null) {
       final granted = await ios.requestPermissions(
         alert: true,
@@ -244,9 +243,8 @@ class NotificationService {
 
   /// 检查是否有权限
   Future<bool> hasPermission() async {
-    final android = _notifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+    final android = _notifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
       final granted = await android.areNotificationsEnabled();
       return granted ?? false;

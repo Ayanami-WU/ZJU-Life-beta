@@ -7,13 +7,20 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:zjulife/app.dart';
+import 'package:zjulife/config/routes.dart';
 import 'package:zjulife/providers/auth_provider.dart';
+import 'package:zjulife/providers/campus_provider.dart';
 import 'package:zjulife/providers/theme_provider.dart';
 import 'package:zjulife/providers/favorites_provider.dart';
 
 void main() {
   testWidgets('App loads correctly', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    appRouter.go('/login');
+    addTearDown(() => appRouter.go('/'));
+
     // Build our app and trigger a frame.
     await tester.pumpWidget(
       MultiProvider(
@@ -21,12 +28,13 @@ void main() {
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => AuthProvider()),
           ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+          ChangeNotifierProvider(create: (_) => CampusProvider()),
         ],
         child: const ZJULifeApp(),
       ),
     );
 
     // Verify that the app loads
-    expect(find.text('浙大生活'), findsOneWidget);
+    expect(find.text('统一身份认证'), findsOneWidget);
   });
 }

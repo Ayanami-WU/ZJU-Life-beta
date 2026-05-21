@@ -145,7 +145,8 @@ class DesignConstants {
   static const Duration highlightDuration = Duration(seconds: 3);
 
   /// 高亮动画时长
-  static const Duration highlightAnimationDuration = Duration(milliseconds: 300);
+  static const Duration highlightAnimationDuration =
+      Duration(milliseconds: 300);
 
   // ============ 不透明度 ============
 

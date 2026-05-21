@@ -46,7 +46,8 @@ class ModernCard extends StatelessWidget {
               color: gradient == null ? (color ?? context.cardColor) : null,
               gradient: gradient,
               borderRadius: borderRadius ?? DesignConstants.cardRadius(),
-              boxShadow: showShadow && !isDark ? DesignConstants.cardShadow : null,
+              boxShadow:
+                  showShadow && !isDark ? DesignConstants.cardShadow : null,
             ),
             child: child,
           ),
@@ -62,7 +63,7 @@ class GradientCard extends StatelessWidget {
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? padding;
   final LinearGradient gradient;
-  
+
   const GradientCard({
     super.key,
     required this.child,
@@ -70,7 +71,7 @@ class GradientCard extends StatelessWidget {
     this.onTap,
     this.padding,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return ModernCard(
@@ -90,7 +91,7 @@ class IconCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? iconColor;
   final Color? backgroundColor;
-  
+
   const IconCard({
     super.key,
     required this.icon,
@@ -100,10 +101,11 @@ class IconCard extends StatelessWidget {
     this.iconColor,
     this.backgroundColor,
   });
-  
+
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? context.primaryColor.withValues(alpha: 0.1);
+    final bgColor =
+        backgroundColor ?? context.primaryColor.withValues(alpha: 0.1);
     final fgColor = iconColor ?? context.primaryColor;
 
     return ModernCard(
@@ -117,7 +119,8 @@ class IconCard extends StatelessWidget {
             height: DesignConstants.iconContainerMedium,
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: BorderRadius.circular(DesignConstants.iconContainerRadius),
+              borderRadius:
+                  BorderRadius.circular(DesignConstants.iconContainerRadius),
             ),
             child: Icon(icon, color: fgColor, size: 24),
           ),
@@ -149,7 +152,7 @@ class InfoCard extends StatelessWidget {
   final IconData? icon;
   final Color? accentColor;
   final VoidCallback? onTap;
-  
+
   const InfoCard({
     super.key,
     required this.title,
@@ -159,7 +162,7 @@ class InfoCard extends StatelessWidget {
     this.accentColor,
     this.onTap,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final accent = accentColor ?? context.primaryColor;
@@ -174,7 +177,8 @@ class InfoCard extends StatelessWidget {
               height: DesignConstants.iconContainerSmall + 4,
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(DesignConstants.iconContainerRadius),
+                borderRadius:
+                    BorderRadius.circular(DesignConstants.iconContainerRadius),
               ),
               child: Icon(icon, color: accent, size: 22),
             ),
@@ -220,7 +224,7 @@ class ListTileCard extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
-  
+
   const ListTileCard({
     super.key,
     this.leading,
@@ -229,7 +233,7 @@ class ListTileCard extends StatelessWidget {
     this.trailing,
     this.onTap,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return ModernCard(
@@ -277,14 +281,14 @@ class SectionHeader extends StatelessWidget {
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
-  
+
   const SectionHeader({
     super.key,
     required this.title,
     this.actionLabel,
     this.onAction,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -310,9 +314,9 @@ class SectionHeader extends StatelessWidget {
 /// Editorial 风格标签（兼容旧代码）
 class EditorialLabel extends StatelessWidget {
   final String text;
-  
+
   const EditorialLabel(this.text, {super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return Text(
@@ -426,11 +430,10 @@ class _RoundCardState extends State<RoundCard>
             ),
           ];
 
-    final bgColor = widget.backgroundColor ?? (
-      brightness == Brightness.dark
-          ? AppColors.surface.dark
-          : AppColors.surface.light
-    );
+    final bgColor = widget.backgroundColor ??
+        (brightness == Brightness.dark
+            ? AppColors.surface.dark
+            : AppColors.surface.light);
 
     final core = Container(
       padding: widget.padding,
@@ -444,7 +447,8 @@ class _RoundCardState extends State<RoundCard>
 
     if (!widget.animate || widget.onTap == null) {
       return widget.onTap != null
-          ? GestureDetector(onTap: widget.onTap, onLongPress: widget.onLongPress, child: core)
+          ? GestureDetector(
+              onTap: widget.onTap, onLongPress: widget.onLongPress, child: core)
           : core;
     }
 

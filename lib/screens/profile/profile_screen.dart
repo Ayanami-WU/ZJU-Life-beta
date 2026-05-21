@@ -63,7 +63,9 @@ class ProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
-                            theme.isDarkMode ? LucideIcons.moon : LucideIcons.sun,
+                            theme.isDarkMode
+                                ? LucideIcons.moon
+                                : LucideIcons.sun,
                             size: 20,
                             color: context.primaryColor,
                           ),
@@ -236,7 +238,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoritesSection(BuildContext context, FavoritesProvider favorites) {
+  Widget _buildFavoritesSection(
+      BuildContext context, FavoritesProvider favorites) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,7 +248,8 @@ class ProfileScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: SectionHeader(title: '我的收藏 (${favorites.favorites.length})'),
+              child:
+                  SectionHeader(title: '我的收藏 (${favorites.favorites.length})'),
             ),
             if (favorites.favorites.isNotEmpty)
               TextButton(
@@ -270,16 +274,16 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...favorites.favorites.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: FavoriteItemCard(
-            item: item,
-            onTap: () => _navigateToFavorite(context, item),
-            onRemove: () {
-              HapticFeedback.lightImpact();
-              favorites.removeFavorite(item.id);
-            },
-          ),
-        )),
+              padding: const EdgeInsets.only(bottom: 10),
+              child: FavoriteItemCard(
+                item: item,
+                onTap: () => _navigateToFavorite(context, item),
+                onRemove: () {
+                  HapticFeedback.lightImpact();
+                  favorites.removeFavorite(item.id);
+                },
+              ),
+            )),
       ],
     );
   }
@@ -308,19 +312,20 @@ class ProfileScreen extends StatelessWidget {
         context.go('/bus?stopId=$actualId');
         break;
       case FavoriteType.libraryRoom:
-        // 跳转到自习页面并定位到具体自习室
-        context.go('/study?roomId=$actualId');
+        // 跳转到自习室房间地图
+        context.go('/study/room/${Uri.encodeComponent(actualId)}');
         break;
       case FavoriteType.librarySeat:
-        // 跳转到自习页面并定位到具体座位
-        context.go('/study?seatId=$actualId');
+        // 当前版本不做单座位详情，回到自习页
+        context.go('/study');
         break;
       case FavoriteType.custom:
         break;
     }
   }
 
-  void _showClearConfirmDialog(BuildContext context, FavoritesProvider favorites) {
+  void _showClearConfirmDialog(
+      BuildContext context, FavoritesProvider favorites) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

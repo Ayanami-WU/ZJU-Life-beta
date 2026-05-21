@@ -12,19 +12,19 @@ import 'providers/campus_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Hive for local storage
   await Hive.initFlutter();
-  
+
   // Initialize date formatting for Chinese locale
   await initializeDateFormatting('zh_CN', null);
-  
+
   // Set preferred orientations (mobile only)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   runApp(
     MultiProvider(
       providers: [

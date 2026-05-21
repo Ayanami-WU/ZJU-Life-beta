@@ -11,18 +11,18 @@ class AppTheme {
   static const Color zjuBlue = Color(0xFF003D87);
   static const Color zjuBlueLight = Color(0xFF1E5CAB);
   static const Color zjuBlueDark = Color(0xFF002855);
-  
+
   // 强调色
   static const Color accentOrange = Color(0xFFFF6B35);
   static const Color accentGreen = Color(0xFF10B981);
   static const Color accentPurple = Color(0xFF8B5CF6);
   static const Color accentPink = Color(0xFFEC4899);
   static const Color amber = accentOrange; // 兼容旧代码
-  
+
   // 字体（兼容旧代码）
   static const String serifFont = 'NotoSerifSC';
   static const String sansFont = 'NotoSansSC';
-  
+
   // 浅色主题
   static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color surfaceLight = Color(0xFFFFFFFF);
@@ -30,7 +30,7 @@ class AppTheme {
   static const Color textPrimaryLight = Color(0xFF0F172A);
   static const Color textSecondaryLight = Color(0xFF64748B);
   static const Color dividerLight = Color(0xFFE2E8F0);
-  
+
   // 深色主题
   static const Color backgroundDark = Color(0xFF0F172A);
   static const Color surfaceDark = Color(0xFF1E293B);
@@ -38,61 +38,61 @@ class AppTheme {
   static const Color textPrimaryDark = Color(0xFFF1F5F9);
   static const Color textSecondaryDark = Color(0xFF94A3B8);
   static const Color dividerDark = Color(0xFF334155);
-  
+
   // 状态颜色
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
-  
+
   // 渐变
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [zjuBlue, zjuBlueLight],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   static const LinearGradient successGradient = LinearGradient(
     colors: [Color(0xFF10B981), Color(0xFF34D399)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   static const LinearGradient warningGradient = LinearGradient(
     colors: [Color(0xFFF59E0B), Color(0xFFFBBF24)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   // 圆角
   static const double radiusSmall = 8.0;
   static const double radiusMedium = 12.0;
   static const double radiusLarge = 16.0;
   static const double radiusXLarge = 24.0;
-  
+
   // 阴影
   static List<BoxShadow> get cardShadow => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.05),
-      blurRadius: 10,
-      offset: const Offset(0, 4),
-    ),
-  ];
-  
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ];
+
   static List<BoxShadow> get cardShadowDark => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.3),
-      blurRadius: 10,
-      offset: const Offset(0, 4),
-    ),
-  ];
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.3),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ];
 
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: backgroundLight,
-      
+
       colorScheme: ColorScheme.light(
         primary: zjuBlue,
         onPrimary: Colors.white,
@@ -104,7 +104,7 @@ class AppTheme {
         error: error,
         onError: Colors.white,
       ),
-      
+
       // AppBar 样式
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -117,7 +117,7 @@ class AppTheme {
           color: textPrimaryLight,
         ),
       ),
-      
+
       // 底部导航栏样式
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surfaceLight,
@@ -143,7 +143,7 @@ class AppTheme {
           return const IconThemeData(color: textSecondaryLight, size: 24);
         }),
       ),
-      
+
       // 文本主题
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -213,7 +213,7 @@ class AppTheme {
           color: textSecondaryLight,
         ),
       ),
-      
+
       // 卡片样式
       cardTheme: CardThemeData(
         color: cardLight,
@@ -223,19 +223,20 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
-      
+
       // 分隔线样式
       dividerTheme: const DividerThemeData(
         color: dividerLight,
         thickness: 1,
         space: 1,
       ),
-      
+
       // 输入框样式
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: backgroundLight,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
           borderSide: const BorderSide(color: dividerLight),
@@ -250,7 +251,7 @@ class AppTheme {
         ),
         hintStyle: const TextStyle(color: textSecondaryLight),
       ),
-      
+
       // 按钮样式
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -267,7 +268,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: zjuBlue,
@@ -282,7 +283,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: zjuBlue,
@@ -296,7 +297,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // 芯片样式
       chipTheme: ChipThemeData(
         backgroundColor: backgroundLight,
@@ -310,7 +311,7 @@ class AppTheme {
         ),
         side: const BorderSide(color: dividerLight),
       ),
-      
+
       // TabBar样式
       tabBarTheme: const TabBarThemeData(
         labelColor: zjuBlue,
@@ -326,7 +327,7 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
-      
+
       // 浮动按钮样式
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: zjuBlue,
@@ -335,7 +336,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusLarge),
         ),
       ),
-      
+
       // 对话框样式
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(
@@ -343,7 +344,7 @@ class AppTheme {
         ),
         backgroundColor: surfaceLight,
       ),
-      
+
       // 底部弹出样式
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: surfaceLight,
@@ -359,7 +360,6 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: backgroundDark,
-      
       colorScheme: ColorScheme.dark(
         primary: zjuBlueLight,
         onPrimary: Colors.white,
@@ -371,7 +371,6 @@ class AppTheme {
         error: error,
         onError: Colors.white,
       ),
-      
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: textPrimaryDark,
@@ -383,7 +382,6 @@ class AppTheme {
           color: textPrimaryDark,
         ),
       ),
-      
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surfaceDark,
         indicatorColor: zjuBlueLight.withValues(alpha: 0.2),
@@ -408,7 +406,6 @@ class AppTheme {
           return const IconThemeData(color: textSecondaryDark, size: 24);
         }),
       ),
-      
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontSize: 32,
@@ -477,7 +474,6 @@ class AppTheme {
           color: textSecondaryDark,
         ),
       ),
-      
       cardTheme: CardThemeData(
         color: cardDark,
         elevation: 0,
@@ -486,17 +482,16 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
-      
       dividerTheme: const DividerThemeData(
         color: dividerDark,
         thickness: 1,
         space: 1,
       ),
-      
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surfaceDark,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
           borderSide: const BorderSide(color: dividerDark),
@@ -511,7 +506,6 @@ class AppTheme {
         ),
         hintStyle: const TextStyle(color: textSecondaryDark),
       ),
-      
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: zjuBlueLight,
@@ -527,7 +521,6 @@ class AppTheme {
           ),
         ),
       ),
-      
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: zjuBlueLight,
@@ -542,7 +535,6 @@ class AppTheme {
           ),
         ),
       ),
-      
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: zjuBlueLight,
@@ -556,7 +548,6 @@ class AppTheme {
           ),
         ),
       ),
-      
       chipTheme: ChipThemeData(
         backgroundColor: surfaceDark,
         selectedColor: zjuBlueLight.withValues(alpha: 0.2),
@@ -569,7 +560,6 @@ class AppTheme {
         ),
         side: const BorderSide(color: dividerDark),
       ),
-      
       tabBarTheme: const TabBarThemeData(
         labelColor: zjuBlueLight,
         unselectedLabelColor: textSecondaryDark,
@@ -584,7 +574,6 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
-      
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: zjuBlueLight,
         foregroundColor: Colors.white,
@@ -592,14 +581,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusLarge),
         ),
       ),
-      
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusLarge),
         ),
         backgroundColor: surfaceDark,
       ),
-      
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: surfaceDark,
         shape: RoundedRectangleBorder(
@@ -615,32 +602,25 @@ extension ThemeContextExtension on BuildContext {
   ThemeData get theme => Theme.of(this);
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
-  
+
   bool get isDark => theme.brightness == Brightness.dark;
   bool get isDarkMode => isDark; // 别名
-  
+
   Color get primaryColor => colorScheme.primary;
-  Color get textColor => isDark 
-      ? AppTheme.textPrimaryDark 
-      : AppTheme.textPrimaryLight;
-  Color get secondaryColor => isDark 
-      ? AppTheme.textSecondaryDark 
-      : AppTheme.textSecondaryLight;
-  Color get backgroundColor => isDark 
-      ? AppTheme.backgroundDark 
-      : AppTheme.backgroundLight;
-  Color get cardColor => isDark 
-      ? AppTheme.cardDark 
-      : AppTheme.cardLight;
-  Color get dividerColor => isDark 
-      ? AppTheme.dividerDark 
-      : AppTheme.dividerLight;
+  Color get textColor =>
+      isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+  Color get secondaryColor =>
+      isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
+  Color get backgroundColor =>
+      isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight;
+  Color get cardColor => isDark ? AppTheme.cardDark : AppTheme.cardLight;
+  Color get dividerColor =>
+      isDark ? AppTheme.dividerDark : AppTheme.dividerLight;
   Color get borderColor => dividerColor; // 别名
   Color get surfaceColor => colorScheme.surface;
   Color get onSurfaceColor => colorScheme.onSurface;
   Color get amberColor => AppTheme.accentOrange;
-  
-  List<BoxShadow> get cardShadow => isDark 
-      ? AppTheme.cardShadowDark 
-      : AppTheme.cardShadow;
+
+  List<BoxShadow> get cardShadow =>
+      isDark ? AppTheme.cardShadowDark : AppTheme.cardShadow;
 }

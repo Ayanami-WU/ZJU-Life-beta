@@ -130,39 +130,50 @@ class _CanteenScreenState extends State<CanteenScreen>
   }
 
   Widget _buildCampusFilter() {
+    final options = _availableCampusOptions();
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
-          children: _campusOptions.map((campus) {
+          children: options.map((campus) {
             final isSelected = campus['id'] == _selectedCampus;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(campus['name']!),
+              child: _CampusFilterChip(
+                label: campus['name']!,
                 selected: isSelected,
-                onSelected: (_) => setState(() => _selectedCampus = campus['id']!),
-                selectedColor: context.primaryColor.withValues(alpha: 0.15),
-                checkmarkColor: context.primaryColor,
-                labelStyle: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? context.primaryColor : context.secondaryColor,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                side: BorderSide(
-                  color: isSelected ? context.primaryColor : context.dividerColor,
-                ),
+                onTap: () => setState(() => _selectedCampus = campus['id']!),
               ),
             );
           }).toList(),
         ),
       ),
     );
+  }
+
+  List<Map<String, String>> _availableCampusOptions() {
+    if (items.isEmpty) return _campusOptions;
+
+    final available = <Map<String, String>>[_campusOptions.first];
+    for (final campus in _campusOptions.skip(1)) {
+      final id = campus['id'];
+      if (id != null && _canteenService.filterByCampus(items, id).isNotEmpty) {
+        available.add(campus);
+      }
+    }
+
+    if (!available.any((campus) => campus['id'] == _selectedCampus)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _selectedCampus = 'all');
+        }
+      });
+    }
+
+    return available;
   }
 
   Widget _buildUpdateInfo() {
@@ -206,6 +217,77 @@ class _CanteenScreenState extends State<CanteenScreen>
     if (diff.inMinutes < 1) return '刚刚';
     if (diff.inMinutes < 60) return '${diff.inMinutes}分钟前';
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _CampusFilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CampusFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = selected ? context.primaryColor : context.dividerColor;
+    final textColor = selected ? context.primaryColor : context.secondaryColor;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          constraints: const BoxConstraints(
+            minWidth: 72,
+            minHeight: 40,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            color: selected
+                ? context.primaryColor.withValues(alpha: 0.12)
+                : context.cardColor,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: borderColor,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (selected) ...[
+                Icon(
+                  Icons.check_rounded,
+                  size: 18,
+                  color: context.primaryColor,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.visible,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  color: textColor,
+                  letterSpacing: 0,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

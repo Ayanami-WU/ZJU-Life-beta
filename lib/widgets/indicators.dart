@@ -9,7 +9,7 @@ class ProgressIndicatorBar extends StatelessWidget {
   final bool showPercentage;
   final Color? activeColor;
   final double height;
-  
+
   const ProgressIndicatorBar({
     super.key,
     required this.progress,
@@ -18,18 +18,18 @@ class ProgressIndicatorBar extends StatelessWidget {
     this.activeColor,
     this.height = 6,
   });
-  
+
   Color _getAutoColor() {
     if (progress < 0.3) return AppTheme.success;
     if (progress < 0.6) return AppTheme.warning;
     if (progress < 0.85) return AppTheme.accentOrange;
     return AppTheme.error;
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final color = activeColor ?? _getAutoColor();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -86,7 +86,7 @@ class StatusChip extends StatelessWidget {
   final Color? color;
   final IconData? icon;
   final bool filled;
-  
+
   const StatusChip({
     super.key,
     required this.text,
@@ -94,11 +94,11 @@ class StatusChip extends StatelessWidget {
     this.icon,
     this.filled = false,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     final chipColor = color ?? context.primaryColor;
-    
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: icon != null ? 10 : 12,
@@ -107,7 +107,8 @@ class StatusChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: filled ? chipColor : chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: filled ? null : Border.all(color: chipColor.withValues(alpha: 0.3)),
+        border:
+            filled ? null : Border.all(color: chipColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -141,13 +142,13 @@ typedef StatusBadge = StatusChip;
 class LoadingIndicator extends StatelessWidget {
   final String? message;
   final Color? color;
-  
+
   const LoadingIndicator({
     super.key,
     this.message,
     this.color,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -183,7 +184,7 @@ class EmptyState extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget? action;
-  
+
   const EmptyState({
     super.key,
     required this.icon,
@@ -191,7 +192,7 @@ class EmptyState extends StatelessWidget {
     this.subtitle,
     this.action,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -244,13 +245,13 @@ class EmptyState extends StatelessWidget {
 class ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
-  
+
   const ErrorState({
     super.key,
     required this.message,
     this.onRetry,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return EmptyState(
@@ -272,38 +273,38 @@ class ErrorState extends StatelessWidget {
 class CrowdLevel extends StatelessWidget {
   final double level; // 0.0 - 1.0
   final bool compact;
-  
+
   const CrowdLevel({
     super.key,
     required this.level,
     this.compact = false,
   });
-  
+
   String _getLevelText() {
     if (level < 0.3) return '空闲';
     if (level < 0.6) return '适中';
     if (level < 0.85) return '较挤';
     return '拥挤';
   }
-  
+
   Color _getLevelColor() {
     if (level < 0.3) return AppTheme.success;
     if (level < 0.6) return AppTheme.warning;
     if (level < 0.85) return AppTheme.accentOrange;
     return AppTheme.error;
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final color = _getLevelColor();
-    
+
     if (compact) {
       return StatusChip(
         text: _getLevelText(),
         color: color,
       );
     }
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

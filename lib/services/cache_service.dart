@@ -231,7 +231,8 @@ class CacheService {
   }
 
   /// 优先缓存策略
-  Future<String?> _getCacheFirst(CachePolicy policy, Future<String> Function() fetcher) async {
+  Future<String?> _getCacheFirst(
+      CachePolicy policy, Future<String> Function() fetcher) async {
     // 1. 先尝试从缓存获取
     final cached = await _getCached(policy);
     if (cached != null) {
@@ -251,24 +252,30 @@ class CacheService {
   }
 
   /// 优先网络策略
-  Future<String?> _getNetworkFirst(CachePolicy policy, Future<String> Function() fetcher) async {
+  Future<String?> _getNetworkFirst(
+      CachePolicy policy, Future<String> Function() fetcher) async {
     try {
       // 1. 先尝试从网络获取
       return await _fetchAndCache(policy, fetcher);
     } catch (e) {
-      // 2. 网络失败，回退到缓存
+      // 2. 网络失败，如果允许则回退到缓存
+      if (!policy.allowStaleWhenOffline) {
+        rethrow;
+      }
       return await _getCached(policy) ?? await _getStaleCache(policy);
     }
   }
 
   /// 仅网络策略
-  Future<String?> _getNetworkOnly(CachePolicy policy, Future<String> Function() fetcher) async {
+  Future<String?> _getNetworkOnly(
+      CachePolicy policy, Future<String> Function() fetcher) async {
     return await _fetchAndCache(policy, fetcher);
   }
 
   /// Stale-While-Revalidate 策略
   /// 立即返回缓存（即使过期），同时在后台刷新
-  Future<String?> _getStaleWhileRevalidate(CachePolicy policy, Future<String> Function() fetcher) async {
+  Future<String?> _getStaleWhileRevalidate(
+      CachePolicy policy, Future<String> Function() fetcher) async {
     // 1. 立即返回缓存（包括过期的）
     final cached = await _getStaleCache(policy);
 
@@ -282,7 +289,8 @@ class CacheService {
   }
 
   /// 从网络获取并缓存
-  Future<String> _fetchAndCache(CachePolicy policy, Future<String> Function() fetcher) async {
+  Future<String> _fetchAndCache(
+      CachePolicy policy, Future<String> Function() fetcher) async {
     // 请求去重：如果已有相同请求在进行中，直接返回
     if (_pendingRequests.containsKey(policy.key)) {
       return await _pendingRequests[policy.key]!;
@@ -301,7 +309,8 @@ class CacheService {
   }
 
   /// 执行网络请求
-  Future<String> _executeFetch(CachePolicy policy, Future<String> Function() fetcher) async {
+  Future<String> _executeFetch(
+      CachePolicy policy, Future<String> Function() fetcher) async {
     _networkRequests++;
 
     try {
@@ -422,7 +431,8 @@ class CacheService {
   /// 获取缓存统计信息
   Map<String, dynamic> getStats() {
     final total = _hits + _misses;
-    final hitRate = total > 0 ? (_hits / total * 100).toStringAsFixed(2) : '0.00';
+    final hitRate =
+        total > 0 ? (_hits / total * 100).toStringAsFixed(2) : '0.00';
 
     return {
       'hits': _hits,

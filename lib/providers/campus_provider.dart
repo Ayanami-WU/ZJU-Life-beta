@@ -12,9 +12,9 @@ enum Campus {
 
   final String label;
   final String code;
-  
+
   const Campus(this.label, this.code);
-  
+
   static Campus fromCode(String code) {
     return Campus.values.firstWhere(
       (c) => c.code == code,
@@ -26,15 +26,15 @@ enum Campus {
 /// 校区选择 Provider
 class CampusProvider extends ChangeNotifier {
   static const String _cacheKey = 'selected_campus';
-  
+
   Campus _selectedCampus = Campus.zijingang;
-  
+
   Campus get selectedCampus => _selectedCampus;
-  
+
   CampusProvider() {
     _loadFromCache();
   }
-  
+
   Future<void> _loadFromCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -47,13 +47,13 @@ class CampusProvider extends ChangeNotifier {
       debugPrint('CampusProvider: Failed to load campus: $e');
     }
   }
-  
+
   Future<void> selectCampus(Campus campus) async {
     if (_selectedCampus == campus) return;
-    
+
     _selectedCampus = campus;
     notifyListeners();
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cacheKey, campus.code);
@@ -61,7 +61,7 @@ class CampusProvider extends ChangeNotifier {
       debugPrint('CampusProvider: Failed to save campus: $e');
     }
   }
-  
+
   /// 获取校区对应的食堂关键词
   List<String> get canteenKeywords {
     switch (_selectedCampus) {
@@ -79,7 +79,7 @@ class CampusProvider extends ChangeNotifier {
         return ['舟山'];
     }
   }
-  
+
   /// 获取校区对应的班车关键词
   List<String> get busKeywords {
     switch (_selectedCampus) {
@@ -97,7 +97,7 @@ class CampusProvider extends ChangeNotifier {
         return ['舟山'];
     }
   }
-  
+
   /// 获取校区对应的自习室/图书馆关键词
   List<String> get libraryKeywords {
     switch (_selectedCampus) {

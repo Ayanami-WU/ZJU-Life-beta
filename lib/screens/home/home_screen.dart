@@ -28,28 +28,33 @@ class _HomeScreenState extends State<HomeScreen> {
   // 实时数据
   final CanteenService _canteenService = CanteenService();
   final BusService _busService = BusService();
-  
+
   List<CanteenData>? _canteenData;
   List<BusRoute>? _busRoutes;
   bool _isLoadingLiveData = false;
-  
+
   @override
   void initState() {
     super.initState();
     _loadLiveData();
   }
-  
+
   Future<void> _loadLiveData() async {
     if (_isLoadingLiveData) return;
     setState(() => _isLoadingLiveData = true);
-    
+
     try {
       // 并行加载食堂和班车数据
       final results = await Future.wait([
-        _canteenService.fetchCanteenData().then((r) => r.canteens).catchError((_) => <CanteenData>[]),
-        _busService.fetchBusRoutes(BusType.campusShuttle).catchError((_) => <BusRoute>[]),
+        _canteenService
+            .fetchCanteenData()
+            .then((r) => r.canteens)
+            .catchError((_) => <CanteenData>[]),
+        _busService
+            .fetchBusRoutes(BusType.campusShuttle)
+            .catchError((_) => <BusRoute>[]),
       ]);
-      
+
       if (mounted) {
         setState(() {
           _canteenData = results[0] as List<CanteenData>;
@@ -73,8 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final brightness = Theme.of(context).brightness;
 
     return Scaffold(
-      backgroundColor: brightness == Brightness.dark 
-          ? const Color(0xFF0F172A) 
+      backgroundColor: brightness == Brightness.dark
+          ? const Color(0xFF0F172A)
           : const Color(0xFFF8FAFC),
       body: CustomScrollView(
         slivers: [
@@ -82,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SliverToBoxAdapter(
             child: SizedBox(height: MediaQuery.of(context).padding.top + 8),
           ),
-          
+
           // 顶部欢迎区域
           SliverToBoxAdapter(
             child: Padding(
@@ -91,7 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: DesignConstants.spacingXL)),
+          const SliverToBoxAdapter(
+              child: SizedBox(height: DesignConstants.spacingXL)),
 
           // 快捷入口卡片组
           SliverToBoxAdapter(
@@ -101,7 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: DesignConstants.spacingL)),
+          const SliverToBoxAdapter(
+              child: SizedBox(height: DesignConstants.spacingL)),
 
           // 收藏区域 - 始终显示
           SliverToBoxAdapter(
@@ -110,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: _buildFavoritesSection(favorites),
             ),
           ),
-          
+
           // 登录提示
           if (!auth.isAuthenticated)
             SliverToBoxAdapter(
@@ -119,10 +126,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: _buildLoginPrompt(),
               ),
             ),
-          
+
           // 底部间距
           SliverToBoxAdapter(
-            child: SizedBox(height: MediaQuery.of(context).padding.bottom + 100),
+            child:
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 100),
           ),
         ],
       ),
@@ -134,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final greeting = _getGreeting(now.hour);
     final dateStr = DateFormat('M月d日 EEEE', 'zh_CN').format(now);
     final brightness = Theme.of(context).brightness;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -149,8 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
-                      color: brightness == Brightness.dark 
-                          ? Colors.white 
+                      color: brightness == Brightness.dark
+                          ? Colors.white
                           : const Color(0xFF0F172A),
                     ),
                   ),
@@ -187,20 +195,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: brightness == Brightness.dark 
-                      ? const Color(0xFF1E293B) 
+                  color: brightness == Brightness.dark
+                      ? const Color(0xFF1E293B)
                       : Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  boxShadow: brightness == Brightness.dark ? null : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  boxShadow: brightness == Brightness.dark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                 ),
                 child: Icon(
-                  auth.isAuthenticated ? LucideIcons.user : LucideIcons.settings,
+                  auth.isAuthenticated
+                      ? Icons.person_outline_rounded
+                      : Icons.settings_outlined,
                   size: 20,
                   color: brightness == Brightness.dark
                       ? Colors.white60
@@ -216,10 +228,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-  
+
   Widget _buildCampusSelector(CampusProvider campus) {
     final brightness = Theme.of(context).brightness;
-    
+
     return GestureDetector(
       onTap: () => _showCampusPicker(campus),
       child: Container(
@@ -262,10 +274,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   void _showCampusPicker(CampusProvider campus) {
     final brightness = Theme.of(context).brightness;
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -339,9 +351,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           c.label,
                           style: TextStyle(
                             fontSize: 15,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.w500,
                             color: isSelected
                                 ? AppColors.winter.dark
                                 : (brightness == Brightness.dark
@@ -427,14 +438,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFavoritesSection(FavoritesProvider favorites) {
     final brightness = Theme.of(context).brightness;
     final isEmpty = favorites.favorites.isEmpty;
-    
+
     return ForeheadCard(
       foreheadColor: AppColors.sakura,
       forehead: _buildForeheadRow(
         icon: LucideIcons.heart,
         title: '我的收藏',
-        trailing: isEmpty 
-            ? null 
+        trailing: isEmpty
+            ? null
             : GestureDetector(
                 onTap: () => context.go('/profile'),
                 child: Text(
@@ -451,25 +462,28 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.only(top: 8),
-        child: isEmpty 
+        child: isEmpty
             ? _buildEmptyFavorites()
             : Column(
-                children: favorites.favorites.take(5).map((item) => 
-                  _LiveFavoriteCard(
-                    item: item,
-                    canteenData: _canteenData,
-                    busRoutes: _busRoutes,
-                    onTap: () => _navigateToFavorite(item),
-                  ),
-                ).toList(),
+                children: favorites.favorites
+                    .take(5)
+                    .map(
+                      (item) => _LiveFavoriteCard(
+                        item: item,
+                        canteenData: _canteenData,
+                        busRoutes: _busRoutes,
+                        onTap: () => _navigateToFavorite(item),
+                      ),
+                    )
+                    .toList(),
               ),
       ),
     );
   }
-  
+
   Widget _buildEmptyFavorites() {
     final brightness = Theme.of(context).brightness;
-    
+
     return Container(
       height: 82,
       decoration: BoxDecoration(
@@ -565,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '登录统一身份认证，使用收藏、座位预约等功能',
+                    '登录统一身份认证，使用收藏、个性化设置等功能',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.white.withValues(alpha: 0.8),
@@ -658,7 +672,7 @@ class _LiveFavoriteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
     final liveInfo = _getLiveInfo();
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: Material(
@@ -676,7 +690,7 @@ class _LiveFavoriteCard extends StatelessWidget {
                   ? const Color(0xFF1E293B)
                   : Colors.white,
               borderRadius: DesignConstants.cardRadius(),
-              boxShadow: brightness == Brightness.dark 
+              boxShadow: brightness == Brightness.dark
                   ? null
                   : [
                       BoxShadow(
@@ -694,7 +708,8 @@ class _LiveFavoriteCard extends StatelessWidget {
                   height: 42,
                   decoration: BoxDecoration(
                     color: _getTypeColor(item.type).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(DesignConstants.iconContainerRadius),
+                    borderRadius: BorderRadius.circular(
+                        DesignConstants.iconContainerRadius),
                   ),
                   child: Icon(
                     item.icon,
@@ -723,7 +738,10 @@ class _LiveFavoriteCard extends StatelessWidget {
                         item.subtitle ?? '',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.5),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -734,7 +752,7 @@ class _LiveFavoriteCard extends StatelessWidget {
                 // 实时数据
                 if (liveInfo != null) ...[
                   const SizedBox(width: DesignConstants.spacingS),
-                  liveInfo.isProgressBar 
+                  liveInfo.isProgressBar
                       ? _buildProgressWidget(context, liveInfo)
                       : _buildLiveInfoWidget(context, liveInfo),
                 ],
@@ -748,7 +766,7 @@ class _LiveFavoriteCard extends StatelessWidget {
 
   Widget _buildLiveInfoWidget(BuildContext context, _LiveInfo info) {
     final brightness = Theme.of(context).brightness;
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -784,7 +802,7 @@ class _LiveFavoriteCard extends StatelessWidget {
 
   Widget _buildProgressWidget(BuildContext context, _LiveInfo info) {
     final brightness = Theme.of(context).brightness;
-    
+
     return SizedBox(
       width: 80,
       child: Column(
@@ -845,14 +863,15 @@ class _LiveFavoriteCard extends StatelessWidget {
 
   _LiveInfo? _getCanteenLiveInfo() {
     if (canteenData == null) return null;
-    
+
     // 通过名称匹配食堂
-    final canteen = canteenData!.where((c) =>
-      c.name.contains(item.title) || item.title.contains(c.name)
-    ).firstOrNull;
-    
+    final canteen = canteenData!
+        .where(
+            (c) => c.name.contains(item.title) || item.title.contains(c.name))
+        .firstOrNull;
+
     if (canteen == null || canteen.currentCount == null) return null;
-    
+
     final crowdLevel = canteen.crowdLevel;
     final Color color;
     if (crowdLevel < 0.3) {
@@ -864,7 +883,7 @@ class _LiveFavoriteCard extends StatelessWidget {
     } else {
       color = const Color(0xFFDC2626);
     }
-    
+
     return _LiveInfo(
       mainText: canteen.crowdStatus,
       subText: '${canteen.currentCount}/${canteen.capacity}人',
@@ -880,22 +899,23 @@ class _LiveFavoriteCard extends StatelessWidget {
     // 从 data 获取路线ID
     final routeId = item.data?['routeId'] as String?;
     if (routeId == null) return null;
-    
+
     final route = busRoutes!.where((r) => r.id == routeId).firstOrNull;
     if (route == null) return null;
-    
+
     // 获取下一班车
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
-    
+
     BusSchedule? nextBus;
     for (final schedule in route.schedules) {
-      if (schedule.departureMinutes > currentMinutes && schedule.isOperatingToday) {
+      if (schedule.departureMinutes > currentMinutes &&
+          schedule.isOperatingToday) {
         nextBus = schedule;
         break;
       }
     }
-    
+
     if (nextBus == null) {
       return _LiveInfo(
         mainText: '今日无',
@@ -903,7 +923,7 @@ class _LiveFavoriteCard extends StatelessWidget {
         color: const Color(0xFF64748B),
       );
     }
-    
+
     final waitMinutes = nextBus.departureMinutes - currentMinutes;
     final Color color;
     if (waitMinutes <= 10) {
@@ -913,7 +933,7 @@ class _LiveFavoriteCard extends StatelessWidget {
     } else {
       color = const Color(0xFF64748B);
     }
-    
+
     return _LiveInfo(
       mainText: nextBus.departureTime,
       subText: waitMinutes <= 60 ? '$waitMinutes分钟后' : '下一班',

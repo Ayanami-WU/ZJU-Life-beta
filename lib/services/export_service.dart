@@ -288,8 +288,6 @@ class ExportService {
 
   /// 获取导出 MIME 类型
   static String getMimeType(ExportFormat format) {
-    return format == ExportFormat.json
-        ? 'application/json'
-        : 'text/csv';
+    return format == ExportFormat.json ? 'application/json' : 'text/csv';
   }
 }
