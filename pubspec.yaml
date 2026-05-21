@@ -47,7 +47,7 @@ dependencies:
   url_launcher: ^6.2.1
   
   # Icons
-  lucide_icons: ^0.257.0
+  lucide_icons_flutter: ^3.0.0
 
   # Notifications
   flutter_local_notifications: ^17.0.0

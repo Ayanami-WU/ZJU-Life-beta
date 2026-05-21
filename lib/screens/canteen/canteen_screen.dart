@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/theme.dart';
@@ -12,6 +12,7 @@ import '../../widgets/indicators.dart';
 import '../../widgets/favorite_button.dart';
 import '../../widgets/data_list_screen_mixin.dart';
 import '../../providers/favorites_provider.dart';
+import '../../design/colors.dart';
 import '../../design/design_constants.dart';
 
 class CanteenScreen extends StatefulWidget {
@@ -113,7 +114,7 @@ class _CanteenScreenState extends State<CanteenScreen>
       backgroundColor: context.backgroundColor,
       body: SafeArea(
         child: buildScreenBody(
-          header: const ZJUHeader(
+          header: const PageHeader(
             title: '食堂',
             subtitle: '实时拥挤度',
           ),
@@ -219,6 +220,7 @@ class _CanteenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _getStatusDynamic(canteen.crowdLevel);
     return AnimatedContainer(
       duration: DesignConstants.highlightAnimationDuration,
       decoration: BoxDecoration(
@@ -230,97 +232,87 @@ class _CanteenCard extends StatelessWidget {
               )
             : null,
       ),
-      child: ModernCard(
+      child: RoundCard(
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _getStatusColor(canteen.crowdLevel).withValues(alpha: 0.1),
-                  borderRadius: DesignConstants.cardRadius(),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                IconBox(
+                  icon: LucideIcons.utensils,
+                  color: statusColor,
                 ),
-                child: Icon(
-                  LucideIcons.utensils,
-                  size: 20,
-                  color: _getStatusColor(canteen.crowdLevel),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      canteen.name,
-                      style: context.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        canteen.name,
+                        style: context.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (canteen.currentCount != null) ...[
-                          Text(
-                            '${canteen.currentCount}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: _getStatusColor(canteen.crowdLevel),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (canteen.currentCount != null) ...[
+                            Text(
+                              '${canteen.currentCount}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor.dark,
+                              ),
                             ),
-                          ),
-                          Text(
-                            ' / ${canteen.capacity} 人',
-                            style: context.textTheme.bodySmall,
-                          ),
-                        ] else
-                          Text(
-                            '容量 ${canteen.capacity} 人',
-                            style: context.textTheme.bodySmall,
-                          ),
-                      ],
-                    ),
-                  ],
+                            Text(
+                              ' / ${canteen.capacity} 人',
+                              style: context.textTheme.bodySmall,
+                            ),
+                          ] else
+                            Text(
+                              '容量 ${canteen.capacity} 人',
+                              style: context.textTheme.bodySmall,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // 收藏按钮
-              FavoriteButton(
-                itemId: 'canteen_${canteen.id}',
-                type: FavoriteType.canteen,
-                title: canteen.name,
-                subtitle: '容量 ${canteen.capacity} 人',
-                data: {
-                  'campus': canteen.campus,
-                  'capacity': canteen.capacity,
-                },
-                size: 22,
-              ),
-              const SizedBox(width: 8),
-              CrowdLevel(
-                level: canteen.crowdLevel,
-                compact: true,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ProgressIndicatorBar(
-            progress: canteen.crowdLevel,
-            showPercentage: false,
-            height: 6,
-          ),
-        ],
-      ),
+                FavoriteButton(
+                  itemId: 'canteen_${canteen.id}',
+                  type: FavoriteType.canteen,
+                  title: canteen.name,
+                  subtitle: '容量 ${canteen.capacity} 人',
+                  data: {
+                    'campus': canteen.campus,
+                    'capacity': canteen.capacity,
+                  },
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
+                CrowdLevel(
+                  level: canteen.crowdLevel,
+                  compact: true,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ProgressIndicatorBar(
+              progress: canteen.crowdLevel,
+              showPercentage: false,
+              height: 6,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Color _getStatusColor(double level) {
-    if (level < 0.3) return AppTheme.success;
-    if (level < 0.6) return AppTheme.warning;
-    if (level < 0.85) return AppTheme.accentOrange;
-    return AppTheme.error;
+  DynamicColor _getStatusDynamic(double level) {
+    if (level < 0.3) return AppColors.okGreen;
+    if (level < 0.6) return AppColors.sand;
+    if (level < 0.85) return AppColors.autumn;
+    return AppColors.summer;
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/theme.dart';
@@ -176,7 +176,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         child: Column(
           children: [
             // Header
-            const ZJUHeader(
+            const PageHeader(
               title: '班车',
               subtitle: '校区通勤',
             ),
@@ -515,25 +515,16 @@ class _ShuttleRouteCard extends StatelessWidget {
               )
             : null,
       ),
-      child: ModernCard(
+      child: RoundCard(
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
-                  borderRadius: DesignConstants.cardRadius(),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const IconBox(
+                  icon: LucideIcons.bus,
+                  color: AppColors.cyan,
                 ),
-                child: const Icon(
-                  LucideIcons.bus,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -604,10 +595,10 @@ class _ShuttleRouteCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     LucideIcons.clock,
                     size: 16,
-                    color: AppTheme.success,
+                    color: AppColors.okGreen.dark,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -618,7 +609,7 @@ class _ShuttleRouteCard extends StatelessWidget {
                     nextSchedule.departureTime,
                     style: context.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.success,
+                      color: AppColors.okGreen.dark,
                     ),
                   ),
                   const Spacer(),
@@ -790,65 +781,50 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
               )
             : null,
       ),
-      child: ModernCard(
+      child: RoundCard(
         padding: EdgeInsets.zero,
         child: Column(
-        children: [
-          // 主要信息区域
-          InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isClockwise
-                                ? [Colors.green.shade400, Colors.teal.shade500]
-                                : [Colors.blue.shade400, Colors.indigo.shade500],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: DesignConstants.cardRadius(),
+          children: [
+            // 主要信息区域
+            InkWell(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconBox(
+                          icon: isClockwise ? LucideIcons.rotateCw : LucideIcons.rotateCcw,
+                          color: isClockwise ? AppColors.okGreen : AppColors.cyan,
                         ),
-                        child: Icon(
-                          isClockwise ? LucideIcons.rotateCw : LucideIcons.rotateCcw,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: (isClockwise ? Colors.green : Colors.blue).withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    widget.route.routeNumber,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: isClockwise ? Colors.green.shade700 : Colors.blue.shade700,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: (isClockwise ? AppColors.okGreen : AppColors.cyan).resolve(context).withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      widget.route.routeNumber,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: isClockwise ? AppColors.okGreen.dark : AppColors.cyan.dark,
+                                      ),
                                     ),
                                   ),
-                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -885,10 +861,10 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             LucideIcons.clock,
                             size: 16,
-                            color: AppTheme.success,
+                            color: AppColors.okGreen.dark,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -899,14 +875,14 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
                             nextSchedule.departureTime,
                             style: context.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.success,
+                              color: AppColors.okGreen.dark,
                             ),
                           ),
                           const Spacer(),
                           Text(
                             _getWaitTime(nextSchedule),
                             style: context.textTheme.bodySmall?.copyWith(
-                              color: AppTheme.success,
+                              color: AppColors.okGreen.dark,
                             ),
                           ),
                         ],
@@ -980,13 +956,13 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
                         ),
                         decoration: BoxDecoration(
                           color: isNext
-                              ? AppTheme.success.withValues(alpha: 0.15)
+                              ? AppColors.okGreen.dark.withValues(alpha: 0.15)
                               : isPast
                                   ? context.backgroundColor.withValues(alpha: 0.5)
                                   : context.backgroundColor,
                           borderRadius: BorderRadius.circular(6),
                           border: isNext
-                              ? Border.all(color: AppTheme.success, width: 1)
+                              ? Border.all(color: AppColors.okGreen.dark, width: 1)
                               : null,
                         ),
                         child: Text(
@@ -995,7 +971,7 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
                             fontSize: 13,
                             fontWeight: isNext ? FontWeight.w600 : FontWeight.w500,
                             color: isNext
-                                ? AppTheme.success
+                                ? AppColors.okGreen.dark
                                 : isPast
                                     ? context.secondaryColor.withValues(alpha: 0.5)
                                     : context.textColor,

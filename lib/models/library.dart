@@ -1,101 +1,164 @@
-/// 图书馆/自习室座位数据
+/// 图书馆座位区域数据
+///
+/// 对应 API: https://booking.lib.zju.edu.cn/reserve/index/list
+/// 认证方式: JWT Bearer Token
 class LibrarySeat {
   final String id;
-  final String roomName;
-  final String buildingName;
-  final int totalSeats;
-  final int availableSeats;
-  final String? floor;
-  
+  final String name;
+  final String nameMerge;
+  final String typeName;
+  final String storeyName;
+  final String premisesName;
+  final String? firstimg;
+  final List<String> images;
+  final String? subtitle;
+  final String? contents;
+  final int totalNum;
+  final int freeNum;
+  final List<BoutiqueSeat> boutique;
+
   LibrarySeat({
     required this.id,
-    required this.roomName,
-    required this.buildingName,
-    required this.totalSeats,
-    required this.availableSeats,
-    this.floor,
+    required this.name,
+    required this.nameMerge,
+    required this.typeName,
+    required this.storeyName,
+    required this.premisesName,
+    this.firstimg,
+    this.images = const [],
+    this.subtitle,
+    this.contents,
+    required this.totalNum,
+    required this.freeNum,
+    this.boutique = const [],
   });
-  
+
   /// 使用率 (0.0 - 1.0)
   double get usageRate {
-    if (totalSeats == 0) return 0;
-    return ((totalSeats - availableSeats) / totalSeats).clamp(0.0, 1.0);
+    if (totalNum == 0) return 0;
+    return ((totalNum - freeNum) / totalNum).clamp(0.0, 1.0);
   }
-  
+
+  /// 已用座位数
+  int get usedNum => totalNum - freeNum;
+
   /// 状态描述
   String get status {
-    if (availableSeats == 0) return '已满';
+    if (freeNum == 0) return '已满';
     if (usageRate > 0.9) return '紧张';
     if (usageRate > 0.6) return '较挤';
     return '空闲';
   }
-  
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'roomName': roomName,
-    'buildingName': buildingName,
-    'totalSeats': totalSeats,
-    'availableSeats': availableSeats,
-    'floor': floor,
-  };
-  
-  /// 从图书馆预约系统的 HTML 解析
-  /// 格式: "座位 48\n空闲 12"
-  factory LibrarySeat.fromHtmlText({
-    required String id,
-    required String roomName,
-    required String buildingName,
-    required String text,
-    String? floor,
-  }) {
-    final lines = text.split('\n');
-    int total = 0;
-    int available = 0;
-    
-    for (final line in lines) {
-      if (line.contains('座位')) {
-        final match = RegExp(r'(\d+)').firstMatch(line);
-        if (match != null) {
-          total = int.parse(match.group(1)!);
-        }
-      } else if (line.contains('空闲')) {
-        final match = RegExp(r'(\d+)').firstMatch(line);
-        if (match != null) {
-          available = int.parse(match.group(1)!);
-        }
-      }
-    }
-    
+
+  /// 完整楼层位置 (如: "主馆 · 三层")
+  String get location => '$premisesName · $storeyName';
+
+  /// 从 API JSON 解析
+  factory LibrarySeat.fromJson(Map<String, dynamic> json) {
     return LibrarySeat(
-      id: id,
-      roomName: roomName,
-      buildingName: buildingName,
-      totalSeats: total,
-      availableSeats: available,
-      floor: floor,
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      nameMerge: json['nameMerge']?.toString() ?? '',
+      typeName: json['type_name']?.toString() ?? '普通座位',
+      storeyName: json['storeyName']?.toString() ?? '',
+      premisesName: json['premisesName']?.toString() ?? '',
+      firstimg: json['firstimg']?.toString(),
+      images: (json['img'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      subtitle: json['sub_title']?.toString(),
+      contents: json['contents']?.toString(),
+      totalNum: _parseInt(json['total_num']),
+      freeNum: _parseInt(json['free_num']),
+      boutique: (json['boutique'] as List<dynamic>?)
+              ?.map((e) => BoutiqueSeat.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'nameMerge': nameMerge,
+        'type_name': typeName,
+        'storeyName': storeyName,
+        'premisesName': premisesName,
+        'firstimg': firstimg,
+        'img': images,
+        'sub_title': subtitle,
+        'contents': contents,
+        'total_num': totalNum,
+        'free_num': freeNum,
+        'boutique': boutique.map((b) => b.toJson()).toList(),
+      };
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 }
 
-/// 自习室区域
-class StudyArea {
+/// 精品座位类型
+class BoutiqueSeat {
   final String id;
   final String name;
-  final String campus;
-  final List<LibrarySeat> seats;
-  
-  StudyArea({
+  final String? enname;
+
+  BoutiqueSeat({
     required this.id,
     required this.name,
-    required this.campus,
-    this.seats = const [],
+    this.enname,
   });
-  
-  int get totalSeats => seats.fold(0, (sum, s) => sum + s.totalSeats);
-  int get availableSeats => seats.fold(0, (sum, s) => sum + s.availableSeats);
-  
-  double get usageRate {
-    if (totalSeats == 0) return 0;
-    return ((totalSeats - availableSeats) / totalSeats).clamp(0.0, 1.0);
+
+  factory BoutiqueSeat.fromJson(Map<String, dynamic> json) {
+    return BoutiqueSeat(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      enname: json['enname']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'enname': enname,
+      };
+}
+
+/// 座位列表分页响应
+class LibrarySeatListResponse {
+  final int page;
+  final int size;
+  final int totalPage;
+  final int count;
+  final List<LibrarySeat> list;
+
+  LibrarySeatListResponse({
+    required this.page,
+    required this.size,
+    required this.totalPage,
+    required this.count,
+    required this.list,
+  });
+
+  bool get hasMore => page < totalPage;
+
+  factory LibrarySeatListResponse.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] as Map<String, dynamic>? ?? {};
+    return LibrarySeatListResponse(
+      page: data['page'] as int? ?? 1,
+      size: data['size'] as int? ?? 10,
+      totalPage: data['totalPage'] as int? ?? 1,
+      count: data['count'] as int? ?? 0,
+      list: (data['list'] as List<dynamic>?)
+              ?.map(
+                  (e) => LibrarySeat.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
   }
 }
