@@ -10,6 +10,7 @@ import '../../models/favorite.dart';
 import '../../services/bus_service.dart';
 import '../../widgets/header.dart';
 import '../../widgets/cards.dart';
+import '../../widgets/cupertino_grouped.dart';
 import '../../widgets/indicators.dart';
 import '../../widgets/favorite_button.dart';
 import '../../design/colors.dart';
@@ -477,7 +478,7 @@ class _ShuttleRouteCard extends StatelessWidget {
     return AnimatedContainer(
       duration: DesignConstants.highlightAnimationDuration,
       decoration: BoxDecoration(
-        borderRadius: DesignConstants.cardRadius(),
+        borderRadius: BorderRadius.circular(12),
         border: isHighlighted
             ? Border.all(
                 color: context.primaryColor,
@@ -485,157 +486,54 @@ class _ShuttleRouteCard extends StatelessWidget {
               )
             : null,
       ),
-      child: RoundCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: CupertinoGroupSection(
+        children: [
+          CupertinoGroupRow(
+            icon: LucideIcons.bus,
+            iconColor: AppColors.cyan.dark,
+            title: route.name,
+            subtitle: route.notes,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const IconBox(
-                  icon: LucideIcons.bus,
-                  color: AppColors.cyan,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  context.primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              route.routeNumber,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: context.primaryColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              route.name,
-                              style: context.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          // 收藏按钮
-                          FavoriteButton(
-                            itemId: 'bus_${route.id}',
-                            type: FavoriteType.busRoute,
-                            title: route.name,
-                            subtitle: route.routeNumber,
-                            data: {
-                              'routeNumber': route.routeNumber,
-                              'scheduleCount': route.schedules.length,
-                            },
-                            size: 22,
-                          ),
-                        ],
-                      ),
-                      if (route.notes != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          route.notes!,
-                          style: context.textTheme.bodySmall,
-                        ),
-                      ],
-                    ],
-                  ),
+                _RouteTag(text: route.routeNumber),
+                const SizedBox(width: 8),
+                FavoriteButton(
+                  itemId: 'bus_${route.id}',
+                  type: FavoriteType.busRoute,
+                  title: route.name,
+                  subtitle: route.routeNumber,
+                  data: {
+                    'routeNumber': route.routeNumber,
+                    'scheduleCount': route.schedules.length,
+                  },
+                  size: 22,
                 ),
               ],
             ),
-            if (nextSchedule != null) ...[
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.backgroundColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      LucideIcons.clock,
-                      size: 16,
-                      color: AppColors.okGreen.dark,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '下一班：',
-                      style: context.textTheme.bodySmall,
-                    ),
-                    Text(
-                      nextSchedule.departureTime,
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.okGreen.dark,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '共 ${route.schedules.length} 班',
-                      style: context.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+          ),
+          if (nextSchedule != null)
+            CupertinoGroupRow(
+              icon: LucideIcons.clock,
+              iconColor: AppColors.okGreen.dark,
+              title: '下一班',
+              subtitle: '共 ${route.schedules.length} 班',
+              trailing: CupertinoMetricPill(
+                text: nextSchedule.departureTime,
+                color: AppColors.okGreen.dark,
               ),
-            ],
-            // 导航按钮
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      _openNavigation(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.cyan
-                            .resolve(context)
-                            .withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            LucideIcons.navigation,
-                            size: 16,
-                            color: AppColors.cyan.dark,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '导航到校区',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.cyan.dark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
-          ],
-        ),
+          CupertinoGroupRow(
+            icon: LucideIcons.navigation,
+            iconColor: AppColors.cyan.dark,
+            title: '导航到校区',
+            showChevron: true,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              _openNavigation(context);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -650,6 +548,34 @@ class _ShuttleRouteCard extends StatelessWidget {
       }
     }
     return route.schedules.isNotEmpty ? route.schedules.first : null;
+  }
+}
+
+class _RouteTag extends StatelessWidget {
+  final String text;
+
+  const _RouteTag({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final resolvedColor = context.primaryColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: resolvedColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: resolvedColor,
+          height: 1,
+        ),
+      ),
+    );
   }
 }
 
@@ -686,227 +612,222 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
               )
             : null,
       ),
-      child: RoundCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            // 主要信息区域
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _isExpanded = !_isExpanded),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconBox(
-                          icon: isClockwise
-                              ? LucideIcons.rotateCw
-                              : LucideIcons.rotateCcw,
-                          color:
-                              isClockwise ? AppColors.okGreen : AppColors.cyan,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: (isClockwise
-                                              ? AppColors.okGreen
-                                              : AppColors.cyan)
-                                          .resolve(context)
-                                          .withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      widget.route.routeNumber,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: isClockwise
-                                            ? AppColors.okGreen.dark
-                                            : AppColors.cyan.dark,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      widget.route.name,
-                                      style:
-                                          context.textTheme.bodyLarge?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '共 ${widget.route.schedules.length} 班',
-                                style: context.textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          _isExpanded
-                              ? LucideIcons.chevronUp
-                              : LucideIcons.chevronDown,
-                          color: context.secondaryColor,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                    if (nextSchedule != null) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: context.backgroundColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
+      child: CupertinoGroupSection(
+        children: [
+          // 主要信息区域
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconBox(
+                        icon: isClockwise
+                            ? LucideIcons.rotateCw
+                            : LucideIcons.rotateCcw,
+                        color: isClockwise ? AppColors.okGreen : AppColors.cyan,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              LucideIcons.clock,
-                              size: 16,
-                              color: AppColors.okGreen.dark,
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (isClockwise
+                                            ? AppColors.okGreen
+                                            : AppColors.cyan)
+                                        .resolve(context)
+                                        .withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    widget.route.routeNumber,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: isClockwise
+                                          ? AppColors.okGreen.dark
+                                          : AppColors.cyan.dark,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    widget.route.name,
+                                    style:
+                                        context.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(height: 4),
                             Text(
-                              '下一班：',
+                              '共 ${widget.route.schedules.length} 班',
                               style: context.textTheme.bodySmall,
-                            ),
-                            Text(
-                              nextSchedule.departureTime,
-                              style: context.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.okGreen.dark,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              _getWaitTime(nextSchedule),
-                              style: context.textTheme.bodySmall?.copyWith(
-                                color: AppColors.okGreen.dark,
-                              ),
                             ),
                           ],
                         ),
                       ),
+                      Icon(
+                        _isExpanded
+                            ? LucideIcons.chevronUp
+                            : LucideIcons.chevronDown,
+                        color: context.secondaryColor,
+                        size: 20,
+                      ),
                     ],
-                  ],
-                ),
-              ),
-            ),
-
-            // 展开区域 - 线路详情
-            if (_isExpanded) ...[
-              Divider(height: 1, color: context.dividerColor),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 站点信息
-                    if (widget.route.notes != null) ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  if (nextSchedule != null) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: context.backgroundColor,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
                         children: [
                           Icon(
-                            LucideIcons.mapPin,
+                            LucideIcons.clock,
                             size: 16,
-                            color: context.secondaryColor,
+                            color: AppColors.okGreen.dark,
                           ),
                           const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              widget.route.notes!,
-                              style: context.textTheme.bodySmall?.copyWith(
-                                height: 1.5,
-                              ),
+                          Text(
+                            '下一班：',
+                            style: context.textTheme.bodySmall,
+                          ),
+                          Text(
+                            nextSchedule.departureTime,
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.okGreen.dark,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            _getWaitTime(nextSchedule),
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: AppColors.okGreen.dark,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                    ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
 
-                    // 发车时刻表
+          // 展开区域 - 线路详情
+          if (_isExpanded) ...[
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 站点信息
+                  if (widget.route.notes != null) ...[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          LucideIcons.calendar,
+                          LucideIcons.mapPin,
                           size: 16,
                           color: context.secondaryColor,
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          '发车时间：',
-                          style: context.textTheme.bodySmall,
+                        Expanded(
+                          child: Text(
+                            widget.route.notes!,
+                            style: context.textTheme.bodySmall?.copyWith(
+                              height: 1.5,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: widget.route.schedules.map((schedule) {
-                        final isPast = _isPastTime(schedule);
-                        final isNext = schedule == nextSchedule;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isNext
-                                ? AppColors.okGreen.dark.withValues(alpha: 0.15)
-                                : isPast
-                                    ? context.backgroundColor
-                                        .withValues(alpha: 0.5)
-                                    : context.backgroundColor,
-                            borderRadius: BorderRadius.circular(6),
-                            border: isNext
-                                ? Border.all(
-                                    color: AppColors.okGreen.dark, width: 1)
-                                : null,
-                          ),
-                          child: Text(
-                            schedule.departureTime,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight:
-                                  isNext ? FontWeight.w600 : FontWeight.w500,
-                              color: isNext
-                                  ? AppColors.okGreen.dark
-                                  : isPast
-                                      ? context.secondaryColor
-                                          .withValues(alpha: 0.5)
-                                      : context.textColor,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                    const SizedBox(height: 12),
                   ],
-                ),
+
+                  // 发车时刻表
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        LucideIcons.calendar,
+                        size: 16,
+                        color: context.secondaryColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '发车时间：',
+                        style: context.textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: widget.route.schedules.map((schedule) {
+                      final isPast = _isPastTime(schedule);
+                      final isNext = schedule == nextSchedule;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isNext
+                              ? AppColors.okGreen.dark.withValues(alpha: 0.15)
+                              : isPast
+                                  ? context.backgroundColor
+                                      .withValues(alpha: 0.5)
+                                  : context.backgroundColor,
+                          borderRadius: BorderRadius.circular(6),
+                          border: isNext
+                              ? Border.all(
+                                  color: AppColors.okGreen.dark, width: 1)
+                              : null,
+                        ),
+                        child: Text(
+                          schedule.departureTime,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                isNext ? FontWeight.w600 : FontWeight.w500,
+                            color: isNext
+                                ? AppColors.okGreen.dark
+                                : isPast
+                                    ? context.secondaryColor
+                                        .withValues(alpha: 0.5)
+                                    : context.textColor,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

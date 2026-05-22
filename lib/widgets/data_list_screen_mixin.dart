@@ -252,7 +252,7 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.error_outline,
+                CupertinoIcons.exclamationmark_circle,
                 size: 64,
                 color: Colors.orange,
               ),
@@ -270,8 +270,12 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
                     ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
+              CupertinoButton.filled(
                 onPressed: loadData,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 10,
+                ),
                 child: const Text('重试'),
               ),
             ],
@@ -291,7 +295,7 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.inbox_outlined,
+                CupertinoIcons.tray,
                 size: 64,
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),
@@ -308,8 +312,12 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
                     ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
+              CupertinoButton.filled(
                 onPressed: loadData,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 10,
+                ),
                 child: const Text('重试'),
               ),
             ],
