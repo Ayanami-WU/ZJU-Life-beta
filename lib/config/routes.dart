@@ -6,13 +6,14 @@ import '../screens/home/home_screen.dart';
 import '../screens/canteen/canteen_screen.dart';
 import '../screens/bus/bus_screen.dart';
 import '../screens/study/study_screen.dart';
-import '../screens/study/library_webview_screen.dart';
+import '../screens/study/study_room_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/cas_webview_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _shellNavigatorKey =
+    GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
@@ -69,6 +70,13 @@ final GoRouter appRouter = GoRouter(
           },
         ),
         GoRoute(
+          path: '/study/room/:roomId',
+          pageBuilder: (context, state) {
+            final roomId = state.pathParameters['roomId'] ?? '';
+            return NoTransitionPage(child: StudyRoomScreen(roomId: roomId));
+          },
+        ),
+        GoRoute(
           path: '/profile',
           pageBuilder: (context, state) => const NoTransitionPage(
             child: ProfileScreen(),
@@ -76,7 +84,7 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
-    
+
     // Auth Routes (outside shell)
     GoRoute(
       path: '/login',
@@ -85,12 +93,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/cas-auth',
       builder: (context, state) => const CasWebViewScreen(),
-    ),
-    
-    // WebView Routes
-    GoRoute(
-      path: '/library-webview',
-      builder: (context, state) => const LibraryWebViewScreen(),
     ),
   ],
 );
