@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +8,7 @@ import '../../models/canteen.dart';
 import '../../models/favorite.dart';
 import '../../services/canteen_service.dart';
 import '../../widgets/header.dart';
-import '../../widgets/cards.dart';
+import '../../widgets/cupertino_grouped.dart';
 import '../../widgets/indicators.dart';
 import '../../widgets/favorite_button.dart';
 import '../../widgets/data_list_screen_mixin.dart';
@@ -140,22 +141,54 @@ class _CanteenScreenState extends State<CanteenScreen>
             final isSelected = campus['id'] == _selectedCampus;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(campus['name']!),
-                selected: isSelected,
-                onSelected: (_) => setState(() => _selectedCampus = campus['id']!),
-                selectedColor: context.primaryColor.withValues(alpha: 0.15),
-                checkmarkColor: context.primaryColor,
-                labelStyle: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? context.primaryColor : context.secondaryColor,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                side: BorderSide(
-                  color: isSelected ? context.primaryColor : context.dividerColor,
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                pressedOpacity: 0.72,
+                onPressed: () =>
+                    setState(() => _selectedCampus = campus['id']!),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? context.primaryColor.withValues(alpha: 0.13)
+                        : context.cardColor,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isSelected
+                          ? context.primaryColor
+                          : context.dividerColor.withValues(alpha: 0.7),
+                      width: 0.7,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isSelected) ...[
+                        Icon(
+                          LucideIcons.check,
+                          size: 14,
+                          color: context.primaryColor,
+                        ),
+                        const SizedBox(width: 5),
+                      ],
+                      Text(
+                        campus['name']!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? context.primaryColor
+                              : context.secondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -224,7 +257,7 @@ class _CanteenCard extends StatelessWidget {
     return AnimatedContainer(
       duration: DesignConstants.highlightAnimationDuration,
       decoration: BoxDecoration(
-        borderRadius: DesignConstants.cardRadius(),
+        borderRadius: BorderRadius.circular(12),
         border: isHighlighted
             ? Border.all(
                 color: context.primaryColor,
@@ -232,53 +265,18 @@ class _CanteenCard extends StatelessWidget {
               )
             : null,
       ),
-      child: RoundCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: CupertinoGroupSection(
+        children: [
+          CupertinoGroupRow(
+            icon: LucideIcons.utensils,
+            iconColor: statusColor.dark,
+            title: canteen.name,
+            subtitle: canteen.currentCount == null
+                ? '容量 ${canteen.capacity} 人'
+                : '${canteen.currentCount} / ${canteen.capacity} 人',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                IconBox(
-                  icon: LucideIcons.utensils,
-                  color: statusColor,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        canteen.name,
-                        style: context.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          if (canteen.currentCount != null) ...[
-                            Text(
-                              '${canteen.currentCount}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: statusColor.dark,
-                              ),
-                            ),
-                            Text(
-                              ' / ${canteen.capacity} 人',
-                              style: context.textTheme.bodySmall,
-                            ),
-                          ] else
-                            Text(
-                              '容量 ${canteen.capacity} 人',
-                              style: context.textTheme.bodySmall,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
                 FavoriteButton(
                   itemId: 'canteen_${canteen.id}',
                   type: FavoriteType.canteen,
@@ -297,14 +295,16 @@ class _CanteenCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            ProgressIndicatorBar(
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+            child: ProgressIndicatorBar(
               progress: canteen.crowdLevel,
               showPercentage: false,
               height: 6,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -18,6 +18,7 @@ import '../../services/bus_service.dart';
 import '../../models/canteen.dart';
 import '../../models/bus.dart';
 import '../../models/favorite.dart';
+import '../../widgets/cupertino_grouped.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -307,145 +308,77 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickEntries() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return CupertinoGroupSection(
+      header: '快捷入口',
       children: [
-        // 主要入口卡片
-        ForeheadCard(
-          foreheadColor: AppColors.cyan,
-          forehead: _buildForeheadRow(
-            icon: LucideIcons.layoutGrid,
-            title: '快捷入口',
-          ),
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TwoLineCard(
-                    title: '食堂',
-                    content: '就餐',
-                    backgroundColor: AppColors.peach,
-                    animate: true,
-                    onTap: () => context.go('/canteen'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TwoLineCard(
-                    title: '自习',
-                    content: '学习',
-                    backgroundColor: AppColors.okGreen,
-                    animate: true,
-                    onTap: () => context.go('/study'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TwoLineCard(
-                    title: '班车',
-                    content: '出行',
-                    backgroundColor: AppColors.violet,
-                    animate: true,
-                    onTap: () => context.go('/bus'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        CupertinoGroupRow(
+          icon: LucideIcons.utensils,
+          iconColor: AppColors.peach.dark,
+          title: '食堂',
+          subtitle: '查看实时拥挤度',
+          showChevron: true,
+          onTap: () => context.go('/canteen'),
+        ),
+        CupertinoGroupRow(
+          icon: LucideIcons.bookOpen,
+          iconColor: AppColors.okGreen.dark,
+          title: '自习',
+          subtitle: '查看图书馆座位',
+          showChevron: true,
+          onTap: () => context.go('/study'),
+        ),
+        CupertinoGroupRow(
+          icon: LucideIcons.bus,
+          iconColor: AppColors.violet.dark,
+          title: '班车',
+          subtitle: '校区班车与校内环线',
+          showChevron: true,
+          onTap: () => context.go('/bus'),
         ),
       ],
     );
   }
 
   Widget _buildFavoritesSection(FavoritesProvider favorites) {
-    final brightness = Theme.of(context).brightness;
     final isEmpty = favorites.favorites.isEmpty;
 
-    return ForeheadCard(
-      foreheadColor: AppColors.sakura,
-      forehead: _buildForeheadRow(
-        icon: LucideIcons.heart,
-        title: '我的收藏',
-        trailing: isEmpty
-            ? null
-            : GestureDetector(
-                onTap: () => context.go('/profile'),
-                child: Text(
-                  '管理',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: brightness == Brightness.dark
-                        ? Colors.white60
-                        : const Color(0xFF64748B),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+    return CupertinoGroupSection(
+      header: '我的收藏',
+      headerTrailing: isEmpty
+          ? null
+          : CupertinoButton(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              onPressed: () => context.go('/profile'),
+              child: Text(
+                '管理',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: context.primaryColor,
                 ),
               ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: isEmpty
-            ? _buildEmptyFavorites()
-            : Column(
-                children: favorites.favorites
-                    .take(5)
-                    .map(
-                      (item) => _LiveFavoriteCard(
-                        item: item,
-                        canteenData: _canteenData,
-                        busRoutes: _busRoutes,
-                        onTap: () => _navigateToFavorite(item),
-                      ),
-                    )
-                    .toList(),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyFavorites() {
-    final brightness = Theme.of(context).brightness;
-
-    return Container(
-      height: 82,
-      decoration: BoxDecoration(
-        color: brightness == Brightness.dark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: DesignConstants.cardRadius(),
-        border: Border.all(
-          color: brightness == Brightness.dark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.05),
-          width: 1,
-          strokeAlign: BorderSide.strokeAlignInside,
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              LucideIcons.heartOff,
-              size: 24,
-              color: brightness == Brightness.dark
-                  ? Colors.white30
-                  : const Color(0xFFCBD5E1),
             ),
-            const SizedBox(height: 6),
-            Text(
-              '在食堂、班车页面点击 ♥ 添加收藏',
-              style: TextStyle(
-                fontSize: 12,
-                color: brightness == Brightness.dark
-                    ? Colors.white38
-                    : const Color(0xFF94A3B8),
+      children: isEmpty
+          ? [
+              CupertinoGroupRow(
+                icon: LucideIcons.heartOff,
+                iconColor: context.secondaryColor,
+                title: '暂无收藏',
+                subtitle: '在食堂、班车页面点击喜欢按钮添加收藏',
               ),
-            ),
-          ],
-        ),
-      ),
+            ]
+          : favorites.favorites
+              .take(5)
+              .map(
+                (item) => _LiveFavoriteCard(
+                  item: item,
+                  canteenData: _canteenData,
+                  busRoutes: _busRoutes,
+                  onTap: () => _navigateToFavorite(item),
+                ),
+              )
+              .toList(),
     );
   }
 
@@ -540,41 +473,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  Widget _buildForeheadRow({
-    required IconData icon,
-    required String title,
-    Widget? trailing,
-  }) {
-    final brightness = Theme.of(context).brightness;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: brightness == Brightness.dark
-                ? Colors.white
-                : const Color(0xFF0F172A),
-          ),
-          const SizedBox(width: DesignConstants.spacingS),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary.resolve(context),
-            ),
-          ),
-          if (trailing != null) ...[
-            const Spacer(),
-            trailing,
-          ],
-        ],
-      ),
-    );
-  }
 }
 
 /// 带实时数据的收藏卡片
@@ -595,107 +493,29 @@ class _LiveFavoriteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final liveInfo = _getLiveInfo();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: RoundCard(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap?.call();
-        },
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: _getTypeColor(item.type).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(
-                  DesignConstants.iconContainerRadius,
-                ),
-              ),
-              child: Icon(
-                item.icon,
-                color: _getTypeColor(item.type),
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: DesignConstants.spacingM),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.subtitle ?? '',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.5),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            if (liveInfo != null) ...[
-              const SizedBox(width: DesignConstants.spacingS),
-              liveInfo.isProgressBar
-                  ? _buildProgressWidget(context, liveInfo)
-                  : _buildLiveInfoWidget(context, liveInfo),
-            ],
-          ],
-        ),
-      ),
+    return CupertinoGroupRow(
+      icon: item.icon,
+      iconColor: _getTypeColor(item.type),
+      title: item.title,
+      subtitle: item.subtitle ?? '',
+      showChevron: liveInfo == null,
+      trailing: liveInfo == null
+          ? null
+          : liveInfo.isProgressBar
+              ? _buildProgressWidget(context, liveInfo)
+              : _buildLiveInfoWidget(context, liveInfo),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
     );
   }
 
   Widget _buildLiveInfoWidget(BuildContext context, _LiveInfo info) {
-    final brightness = Theme.of(context).brightness;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: info.color.withValues(alpha: 0.12),
-        borderRadius: DesignConstants.smallRadius(),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            info.mainText,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: info.color,
-            ),
-          ),
-          if (info.subText != null)
-            Text(
-              info.subText!,
-              style: TextStyle(
-                fontSize: 10,
-                color: brightness == Brightness.dark
-                    ? Colors.white60
-                    : const Color(0xFF64748B),
-              ),
-            ),
-        ],
-      ),
+    return CupertinoMetricPill(
+      text: info.mainText,
+      subtext: info.subText,
+      color: info.color,
     );
   }
 

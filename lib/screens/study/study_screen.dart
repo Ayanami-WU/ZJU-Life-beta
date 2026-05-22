@@ -13,6 +13,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/library_service.dart';
 import '../../widgets/cards.dart';
+import '../../widgets/cupertino_grouped.dart';
 import '../../widgets/header.dart';
 import '../../widgets/indicators.dart';
 import '../../widgets/favorite_button.dart';
@@ -284,63 +285,44 @@ class _StudyScreenState extends State<StudyScreen> {
     final occupancy =
         totalSeats > 0 ? (totalSeats - freeSeats) / totalSeats : 0.0;
 
-    return ForeheadCard(
-      foreheadColor: AppColors.winter,
-      forehead: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Icon(LucideIcons.bookOpen,
-                size: 18, color: AppColors.textPrimary.resolve(context)),
-            const SizedBox(width: 8),
-            Text(
-              '座位概览',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary.resolve(context),
+    final occupancyColor = occupancy < 0.6
+        ? AppColors.okGreen.dark
+        : occupancy < 0.85
+            ? AppColors.autumn.dark
+            : AppColors.summer.dark;
+
+    return CupertinoGroupSection(
+      header: '座位概览',
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: _OverviewMetric(
+                  label: '空闲座位',
+                  value: '$freeSeats',
+                  color: AppColors.okGreen.dark,
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                child: _OverviewMetric(
+                  label: '总座位',
+                  value: '$totalSeats',
+                  color: AppColors.winter.dark,
+                ),
+              ),
+              Expanded(
+                child: _OverviewMetric(
+                  label: '使用率',
+                  value: '${(occupancy * 100).round()}%',
+                  color: occupancyColor,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: TwoLineCard(
-                title: '空闲座位',
-                content: '$freeSeats',
-                backgroundColor: AppColors.okGreen,
-                withColoredFont: true,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TwoLineCard(
-                title: '总座位',
-                content: '$totalSeats',
-                backgroundColor: AppColors.winter,
-                withColoredFont: true,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TwoLineCard(
-                title: '使用率',
-                content: '${(occupancy * 100).round()}%',
-                backgroundColor: occupancy < 0.6
-                    ? AppColors.okGreen
-                    : occupancy < 0.85
-                        ? AppColors.autumn
-                        : AppColors.summer,
-                withColoredFont: true,
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
@@ -439,6 +421,43 @@ class _StatusView extends StatelessWidget {
   }
 }
 
+class _OverviewMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _OverviewMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary.resolve(context),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ─── 座位卡片 ──────────────────────────────────────────────────────────────────
 
 class _SeatCard extends StatelessWidget {
@@ -459,7 +478,7 @@ class _SeatCard extends StatelessWidget {
     return AnimatedContainer(
       duration: DesignConstants.highlightAnimationDuration,
       decoration: BoxDecoration(
-        borderRadius: DesignConstants.cardRadius(),
+        borderRadius: BorderRadius.circular(12),
         border: isHighlighted
             ? Border.all(
                 color: context.primaryColor,
@@ -467,70 +486,38 @@ class _SeatCard extends StatelessWidget {
               )
             : null,
       ),
-      child: ListItemCard(
-        leading: IconBox(
-          icon: LucideIcons.bookOpen,
-          color: occupancy < 0.6
-              ? AppColors.okGreen
-              : occupancy < 0.85
-                  ? AppColors.autumn
-                  : AppColors.summer,
-        ),
-        title: seat.name,
-        subtitle: '${seat.typeName}  ·  ${seat.storeyName}',
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+      child: CupertinoGroupSection(
+        children: [
+          CupertinoGroupRow(
+            icon: LucideIcons.bookOpen,
+            iconColor: statusColor,
+            title: seat.name,
+            subtitle: '${seat.typeName}  ·  ${seat.storeyName}',
+            trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${seat.freeNum}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: statusColor,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '/${seat.totalNum}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary.resolve(context),
-                        ),
-                      ),
-                    ],
-                  ),
+                CupertinoMetricPill(
+                  text: '${seat.freeNum}/${seat.totalNum}',
+                  subtext: seat.status,
+                  color: statusColor,
                 ),
-                Text(
-                  seat.status,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: statusColor,
-                    fontWeight: FontWeight.w500,
-                  ),
+                const SizedBox(width: 8),
+                FavoriteButton(
+                  itemId: 'library_${seat.id}',
+                  type: FavoriteType.libraryRoom,
+                  title: seat.name,
+                  subtitle: seat.location,
+                  data: {
+                    'building': seat.premisesName,
+                    'floor': seat.storeyName,
+                    'totalSeats': seat.totalNum,
+                  },
+                  size: 20,
                 ),
               ],
             ),
-            const SizedBox(width: 8),
-            FavoriteButton(
-              itemId: 'library_${seat.id}',
-              type: FavoriteType.libraryRoom,
-              title: seat.name,
-              subtitle: seat.location,
-              data: {
-                'building': seat.premisesName,
-                'floor': seat.storeyName,
-                'totalSeats': seat.totalNum,
-              },
-              size: 20,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
