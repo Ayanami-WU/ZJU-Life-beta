@@ -1,263 +1,329 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-/// ZJU Life 现代主题配置
-/// Material 3 设计风格：
-/// - 圆角卡片
-/// - 柔和阴影
-/// - 渐变色彩
-/// - 舒适的间距
+/// ZJU Life Cupertino-like theme configuration.
+///
+/// The app still runs on MaterialApp/router for compatibility, but the shared
+/// tokens mirror iOS grouped backgrounds, system text colors, light separators,
+/// and restrained press feedback.
 class AppTheme {
-  // 主色调 - 浙大蓝
+  // Brand colors.
   static const Color zjuBlue = Color(0xFF003D87);
-  static const Color zjuBlueLight = Color(0xFF1E5CAB);
+  static const Color zjuBlueLight = Color(0xFF0A84FF);
   static const Color zjuBlueDark = Color(0xFF002855);
-  
-  // 强调色
+
+  // Accent colors.
   static const Color accentOrange = Color(0xFFFF6B35);
   static const Color accentGreen = Color(0xFF10B981);
   static const Color accentPurple = Color(0xFF8B5CF6);
   static const Color accentPink = Color(0xFFEC4899);
-  static const Color amber = accentOrange; // 兼容旧代码
-  
-  // 字体（兼容旧代码）
+  static const Color amber = accentOrange;
+
+  // Font aliases kept for old call sites.
   static const String serifFont = 'NotoSerifSC';
   static const String sansFont = 'NotoSansSC';
-  
-  // 浅色主题
-  static const Color backgroundLight = Color(0xFFF8FAFC);
+
+  // iOS grouped background tokens.
+  static const Color backgroundLight = Color(0xFFF2F2F7);
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color cardLight = Color(0xFFFFFFFF);
-  static const Color textPrimaryLight = Color(0xFF0F172A);
-  static const Color textSecondaryLight = Color(0xFF64748B);
-  static const Color dividerLight = Color(0xFFE2E8F0);
-  
-  // 深色主题
-  static const Color backgroundDark = Color(0xFF0F172A);
-  static const Color surfaceDark = Color(0xFF1E293B);
-  static const Color cardDark = Color(0xFF1E293B);
-  static const Color textPrimaryDark = Color(0xFFF1F5F9);
-  static const Color textSecondaryDark = Color(0xFF94A3B8);
-  static const Color dividerDark = Color(0xFF334155);
-  
-  // 状态颜色
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
-  static const Color info = Color(0xFF3B82F6);
-  
-  // 渐变
+  static const Color secondarySurfaceLight = Color(0xFFF7F7FA);
+  static const Color textPrimaryLight = Color(0xFF111113);
+  static const Color textSecondaryLight = Color(0xFF6E6E73);
+  static const Color dividerLight = Color(0xFFD1D1D6);
+
+  static const Color backgroundDark = Color(0xFF000000);
+  static const Color surfaceDark = Color(0xFF1C1C1E);
+  static const Color cardDark = Color(0xFF1C1C1E);
+  static const Color secondarySurfaceDark = Color(0xFF2C2C2E);
+  static const Color textPrimaryDark = Color(0xFFF2F2F7);
+  static const Color textSecondaryDark = Color(0xFF8E8E93);
+  static const Color dividerDark = Color(0xFF38383A);
+
+  // Status colors.
+  static const Color success = Color(0xFF34C759);
+  static const Color warning = Color(0xFFFF9F0A);
+  static const Color error = Color(0xFFFF3B30);
+  static const Color info = Color(0xFF007AFF);
+
+  // Gradients are kept for branded entry cards.
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [zjuBlue, zjuBlueLight],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   static const LinearGradient successGradient = LinearGradient(
     colors: [Color(0xFF10B981), Color(0xFF34D399)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
+
   static const LinearGradient warningGradient = LinearGradient(
-    colors: [Color(0xFFF59E0B), Color(0xFFFBBF24)],
+    colors: [Color(0xFFFF9F0A), Color(0xFFFFCC00)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  
-  // 圆角
-  static const double radiusSmall = 8.0;
+
+  static const double radiusSmall = 10.0;
   static const double radiusMedium = 12.0;
   static const double radiusLarge = 16.0;
-  static const double radiusXLarge = 24.0;
-  
-  // 阴影
+  static const double radiusXLarge = 22.0;
+
   static List<BoxShadow> get cardShadow => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.05),
-      blurRadius: 10,
-      offset: const Offset(0, 4),
-    ),
-  ];
-  
-  static List<BoxShadow> get cardShadowDark => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.3),
-      blurRadius: 10,
-      offset: const Offset(0, 4),
-    ),
-  ];
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.045),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
+        ),
+      ];
 
-  static ThemeData get lightTheme {
+  static List<BoxShadow> get cardShadowDark => const [];
+
+  static ThemeData get lightTheme => _buildTheme(Brightness.light);
+  static ThemeData get darkTheme => _buildTheme(Brightness.dark);
+
+  static ThemeData _buildTheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final primary = isDark ? zjuBlueLight : zjuBlue;
+    final background = isDark ? backgroundDark : backgroundLight;
+    final surface = isDark ? surfaceDark : surfaceLight;
+    final secondarySurface =
+        isDark ? secondarySurfaceDark : secondarySurfaceLight;
+    final textPrimary = isDark ? textPrimaryDark : textPrimaryLight;
+    final textSecondary = isDark ? textSecondaryDark : textSecondaryLight;
+    final divider = isDark ? dividerDark : dividerLight;
+
+    final colorScheme = isDark
+        ? ColorScheme.dark(
+            primary: primary,
+            onPrimary: Colors.white,
+            primaryContainer: primary.withValues(alpha: 0.18),
+            secondary: accentOrange,
+            onSecondary: Colors.white,
+            surface: surface,
+            onSurface: textPrimary,
+            error: error,
+            onError: Colors.white,
+          )
+        : ColorScheme.light(
+            primary: primary,
+            onPrimary: Colors.white,
+            primaryContainer: primary.withValues(alpha: 0.12),
+            secondary: accentOrange,
+            onSecondary: Colors.white,
+            surface: surface,
+            onSurface: textPrimary,
+            error: error,
+            onError: Colors.white,
+          );
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: backgroundLight,
-      
-      colorScheme: ColorScheme.light(
-        primary: zjuBlue,
-        onPrimary: Colors.white,
-        primaryContainer: zjuBlue.withValues(alpha: 0.1),
-        secondary: accentOrange,
-        onSecondary: Colors.white,
-        surface: surfaceLight,
-        onSurface: textPrimaryLight,
-        error: error,
-        onError: Colors.white,
-      ),
-      
-      // AppBar 样式
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: textPrimaryLight,
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
+      platform: TargetPlatform.iOS,
+      brightness: brightness,
+      scaffoldBackgroundColor: background,
+      colorScheme: colorScheme,
+      splashFactory: NoSplash.splashFactory,
+      highlightColor: Colors.transparent,
+      hoverColor: primary.withValues(alpha: 0.05),
+      cupertinoOverrideTheme: CupertinoThemeData(
+        brightness: brightness,
+        primaryColor: primary,
+        scaffoldBackgroundColor: background,
+        barBackgroundColor: surface.withValues(alpha: 0.88),
+        textTheme: CupertinoTextThemeData(
+          primaryColor: primary,
+          textStyle: TextStyle(
+            color: textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w400,
+            height: 1.28,
+          ),
+          actionTextStyle: TextStyle(
+            color: primary,
+            fontSize: 17,
+            fontWeight: FontWeight.w500,
+          ),
+          navTitleTextStyle: TextStyle(
+            color: textPrimary,
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+          ),
+          navLargeTitleTextStyle: TextStyle(
+            color: textPrimary,
+            fontSize: 34,
+            fontWeight: FontWeight.w700,
+            height: 1.12,
+          ),
+          tabLabelTextStyle: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
-      
-      // 底部导航栏样式
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        foregroundColor: textPrimary,
+        elevation: 0,
+        centerTitle: false,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+        ),
+      ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surfaceLight,
-        indicatorColor: zjuBlue.withValues(alpha: 0.1),
+        backgroundColor: surface.withValues(alpha: 0.92),
+        indicatorColor: Colors.transparent,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: zjuBlue,
-            );
-          }
-          return const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: textSecondaryLight,
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            fontSize: 11,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? primary : textSecondary,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: zjuBlue, size: 24);
-          }
-          return const IconThemeData(color: textSecondaryLight, size: 24);
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: selected ? primary : textSecondary,
+            size: 24,
+          );
         }),
       ),
-      
-      // 文本主题
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         displayLarge: TextStyle(
-          fontSize: 32,
+          fontSize: 34,
           fontWeight: FontWeight.w700,
-          color: textPrimaryLight,
-          height: 1.2,
+          color: textPrimary,
+          height: 1.12,
         ),
         displayMedium: TextStyle(
-          fontSize: 28,
+          fontSize: 30,
           fontWeight: FontWeight.w700,
-          color: textPrimaryLight,
-          height: 1.2,
+          color: textPrimary,
+          height: 1.16,
         ),
         displaySmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
-          height: 1.3,
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+          height: 1.2,
         ),
         headlineLarge: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
         ),
         headlineMedium: TextStyle(
-          fontSize: 18,
+          fontSize: 19,
           fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
+          color: textPrimary,
         ),
         headlineSmall: TextStyle(
-          fontSize: 16,
+          fontSize: 17,
           fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
+          color: textPrimary,
         ),
         bodyLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
-          color: textPrimaryLight,
-          height: 1.5,
+          color: textPrimary,
+          height: 1.45,
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: textPrimaryLight,
-          height: 1.5,
+          color: textPrimary,
+          height: 1.45,
         ),
         bodySmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w400,
-          color: textSecondaryLight,
-          height: 1.4,
+          color: textSecondary,
+          height: 1.35,
         ),
         labelLarge: TextStyle(
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
-          color: textPrimaryLight,
+          color: textPrimary,
         ),
         labelMedium: TextStyle(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: textSecondaryLight,
+          color: textSecondary,
         ),
         labelSmall: TextStyle(
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w500,
-          color: textSecondaryLight,
+          color: textSecondary,
         ),
       ),
-      
-      // 卡片样式
       cardTheme: CardThemeData(
-        color: cardLight,
+        color: surface,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
         ),
         margin: EdgeInsets.zero,
       ),
-      
-      // 分隔线样式
-      dividerTheme: const DividerThemeData(
-        color: dividerLight,
-        thickness: 1,
-        space: 1,
+      dividerTheme: DividerThemeData(
+        color: divider.withValues(alpha: isDark ? 0.72 : 0.82),
+        thickness: 0.5,
+        space: 0.5,
       ),
-      
-      // 输入框样式
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: backgroundLight,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        fillColor: secondarySurface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 13,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: const BorderSide(color: dividerLight),
+          borderSide: BorderSide(color: divider.withValues(alpha: 0.75)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: const BorderSide(color: dividerLight),
+          borderSide: BorderSide(color: divider.withValues(alpha: 0.75)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: const BorderSide(color: zjuBlue, width: 2),
+          borderSide: BorderSide(color: primary, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: textSecondaryLight),
+        hintStyle: TextStyle(color: textSecondary),
       ),
-      
-      // 按钮样式
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: zjuBlue,
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          minimumSize: const Size(0, 46),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMedium),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ).copyWith(
+          overlayColor: WidgetStatePropertyAll(
+            Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          minimumSize: const Size(0, 46),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
@@ -267,12 +333,12 @@ class AppTheme {
           ),
         ),
       ),
-      
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: zjuBlue,
-          side: const BorderSide(color: zjuBlue),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          foregroundColor: primary,
+          side: BorderSide(color: divider.withValues(alpha: 0.9)),
+          minimumSize: const Size(0, 46),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
@@ -282,11 +348,11 @@ class AppTheme {
           ),
         ),
       ),
-      
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: zjuBlue,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          foregroundColor: primary,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          minimumSize: const Size(0, 36),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusSmall),
           ),
@@ -296,351 +362,92 @@ class AppTheme {
           ),
         ),
       ),
-      
-      // 芯片样式
       chipTheme: ChipThemeData(
-        backgroundColor: backgroundLight,
-        selectedColor: zjuBlue.withValues(alpha: 0.15),
-        labelStyle: const TextStyle(
+        backgroundColor: secondarySurface,
+        selectedColor: primary.withValues(alpha: isDark ? 0.22 : 0.13),
+        labelStyle: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
+          color: textSecondary,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusSmall),
-        ),
-        side: const BorderSide(color: dividerLight),
-      ),
-      
-      // TabBar样式
-      tabBarTheme: const TabBarThemeData(
-        labelColor: zjuBlue,
-        unselectedLabelColor: textSecondaryLight,
-        indicatorColor: zjuBlue,
-        indicatorSize: TabBarIndicatorSize.tab,
-        labelStyle: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      
-      // 浮动按钮样式
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: zjuBlue,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusLarge),
-        ),
-      ),
-      
-      // 对话框样式
-      dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusLarge),
-        ),
-        backgroundColor: surfaceLight,
-      ),
-      
-      // 底部弹出样式
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: surfaceLight,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-      ),
-    );
-  }
-
-  static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: backgroundDark,
-      
-      colorScheme: ColorScheme.dark(
-        primary: zjuBlueLight,
-        onPrimary: Colors.white,
-        primaryContainer: zjuBlue.withValues(alpha: 0.3),
-        secondary: accentOrange,
-        onSecondary: Colors.white,
-        surface: surfaceDark,
-        onSurface: textPrimaryDark,
-        error: error,
-        onError: Colors.white,
-      ),
-      
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: textPrimaryDark,
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryDark,
-        ),
-      ),
-      
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surfaceDark,
-        indicatorColor: zjuBlueLight.withValues(alpha: 0.2),
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: zjuBlueLight,
-            );
-          }
-          return const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: textSecondaryDark,
-          );
-        }),
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: zjuBlueLight, size: 24);
-          }
-          return const IconThemeData(color: textSecondaryDark, size: 24);
-        }),
-      ),
-      
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          color: textPrimaryDark,
-          height: 1.2,
-        ),
-        displayMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w700,
-          color: textPrimaryDark,
-          height: 1.2,
-        ),
-        displaySmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryDark,
-          height: 1.3,
-        ),
-        headlineLarge: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryDark,
-        ),
-        headlineMedium: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryDark,
-        ),
-        headlineSmall: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryDark,
-        ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: textPrimaryDark,
-          height: 1.5,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: textPrimaryDark,
-          height: 1.5,
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          color: textSecondaryDark,
-          height: 1.4,
-        ),
-        labelLarge: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: textPrimaryDark,
-        ),
-        labelMedium: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: textSecondaryDark,
-        ),
-        labelSmall: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          color: textSecondaryDark,
-        ),
-      ),
-      
-      cardTheme: CardThemeData(
-        color: cardDark,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusMedium),
-        ),
-        margin: EdgeInsets.zero,
-      ),
-      
-      dividerTheme: const DividerThemeData(
-        color: dividerDark,
-        thickness: 1,
-        space: 1,
-      ),
-      
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: surfaceDark,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: const BorderSide(color: dividerDark),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: const BorderSide(color: dividerDark),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: const BorderSide(color: zjuBlueLight, width: 2),
-        ),
-        hintStyle: const TextStyle(color: textSecondaryDark),
-      ),
-      
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: zjuBlueLight,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMedium),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: zjuBlueLight,
-          side: const BorderSide(color: zjuBlueLight),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMedium),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: zjuBlueLight,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusSmall),
-          ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      
-      chipTheme: ChipThemeData(
-        backgroundColor: surfaceDark,
-        selectedColor: zjuBlueLight.withValues(alpha: 0.2),
-        labelStyle: const TextStyle(
+        secondaryLabelStyle: TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
+          color: primary,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusSmall),
+          borderRadius: BorderRadius.circular(999),
         ),
-        side: const BorderSide(color: dividerDark),
+        side: BorderSide(color: divider.withValues(alpha: 0.65)),
       ),
-      
-      tabBarTheme: const TabBarThemeData(
-        labelColor: zjuBlueLight,
-        unselectedLabelColor: textSecondaryDark,
-        indicatorColor: zjuBlueLight,
+      tabBarTheme: TabBarThemeData(
+        labelColor: primary,
+        unselectedLabelColor: textSecondary,
+        indicatorColor: primary,
+        dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
-        labelStyle: TextStyle(
+        labelStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
-        unselectedLabelStyle: TextStyle(
+        unselectedLabelStyle: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
       ),
-      
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: zjuBlueLight,
+        backgroundColor: primary,
         foregroundColor: Colors.white,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusLarge),
         ),
       ),
-      
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusLarge),
+          borderRadius: BorderRadius.circular(18),
         ),
-        backgroundColor: surfaceDark,
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
       ),
-      
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: surfaceDark,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         ),
       ),
     );
   }
 }
 
-/// 主题扩展 - 快捷访问器
+/// Theme extension - short aliases used across the app.
 extension ThemeContextExtension on BuildContext {
   ThemeData get theme => Theme.of(this);
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
-  
+
   bool get isDark => theme.brightness == Brightness.dark;
-  bool get isDarkMode => isDark; // 别名
-  
+  bool get isDarkMode => isDark;
+
   Color get primaryColor => colorScheme.primary;
-  Color get textColor => isDark 
-      ? AppTheme.textPrimaryDark 
-      : AppTheme.textPrimaryLight;
-  Color get secondaryColor => isDark 
-      ? AppTheme.textSecondaryDark 
-      : AppTheme.textSecondaryLight;
-  Color get backgroundColor => isDark 
-      ? AppTheme.backgroundDark 
-      : AppTheme.backgroundLight;
-  Color get cardColor => isDark 
-      ? AppTheme.cardDark 
-      : AppTheme.cardLight;
-  Color get dividerColor => isDark 
-      ? AppTheme.dividerDark 
-      : AppTheme.dividerLight;
-  Color get borderColor => dividerColor; // 别名
+  Color get textColor =>
+      isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+  Color get secondaryColor =>
+      isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
+  Color get backgroundColor =>
+      isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight;
+  Color get groupedBackgroundColor => backgroundColor;
+  Color get secondaryBackgroundColor =>
+      isDark ? AppTheme.secondarySurfaceDark : AppTheme.secondarySurfaceLight;
+  Color get cardColor => isDark ? AppTheme.cardDark : AppTheme.cardLight;
+  Color get dividerColor =>
+      isDark ? AppTheme.dividerDark : AppTheme.dividerLight;
+  Color get borderColor => dividerColor;
   Color get surfaceColor => colorScheme.surface;
   Color get onSurfaceColor => colorScheme.onSurface;
   Color get amberColor => AppTheme.accentOrange;
-  
-  List<BoxShadow> get cardShadow => isDark 
-      ? AppTheme.cardShadowDark 
-      : AppTheme.cardShadow;
+
+  List<BoxShadow> get cardShadow =>
+      isDark ? AppTheme.cardShadowDark : AppTheme.cardShadow;
 }
