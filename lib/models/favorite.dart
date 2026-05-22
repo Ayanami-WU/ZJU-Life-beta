@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 /// 收藏项目类型
 enum FavoriteType {
-  busRoute,       // 班车线路
-  busStop,        // 班车站点
-  canteen,        // 食堂
-  canteenWindow,  // 食堂窗口
-  libraryRoom,    // 图书馆房间
-  librarySeat,    // 图书馆座位
-  custom,         // 自定义
+  busRoute, // 班车线路
+  busStop, // 班车站点
+  canteen, // 食堂
+  canteenWindow, // 食堂窗口
+  libraryRoom, // 图书馆房间
+  librarySeat, // 图书馆座位
+  custom, // 自定义
 }
 
 /// 收藏项目
@@ -20,7 +20,7 @@ class FavoriteItem {
   final String? iconName;
   final Map<String, dynamic>? data;
   final DateTime createdAt;
-  
+
   FavoriteItem({
     required this.id,
     required this.type,
@@ -30,7 +30,7 @@ class FavoriteItem {
     this.data,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
-  
+
   /// 从 JSON 创建
   factory FavoriteItem.fromJson(Map<String, dynamic> json) {
     return FavoriteItem(
@@ -43,12 +43,12 @@ class FavoriteItem {
       subtitle: json['subtitle'] as String?,
       iconName: json['iconName'] as String?,
       data: json['data'] as Map<String, dynamic>?,
-      createdAt: json['createdAt'] != null 
+      createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : null,
     );
   }
-  
+
   /// 转换为 JSON
   Map<String, dynamic> toJson() {
     return {
@@ -61,7 +61,7 @@ class FavoriteItem {
       'createdAt': createdAt.toIso8601String(),
     };
   }
-  
+
   /// 获取图标
   IconData get icon {
     switch (type) {
@@ -78,7 +78,7 @@ class FavoriteItem {
         return Icons.star_rounded;
     }
   }
-  
+
   /// 获取类型名称
   String get typeName {
     switch (type) {
@@ -98,16 +98,16 @@ class FavoriteItem {
         return '其他';
     }
   }
-  
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is FavoriteItem && other.id == id && other.type == type;
   }
-  
+
   @override
   int get hashCode => Object.hash(id, type);
-  
+
   FavoriteItem copyWith({
     String? id,
     FavoriteType? type,

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -19,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
@@ -33,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -53,8 +56,29 @@ class _LoginScreenState extends State<LoginScreen> {
         await authProvider.loginWithCas(
           userId: result.userId,
           userName: result.userName,
+          ticket: result.ticket,
           cookie: result.cookie,
         );
+
+        final libraryJwt = result.libraryJwt;
+        if (libraryJwt != null && libraryJwt.isNotEmpty) {
+          await authProvider.updateLibraryJwt(libraryJwt);
+        }
+
+        final casCookie = result.cookie;
+        if ((libraryJwt == null || libraryJwt.isEmpty) &&
+            casCookie != null &&
+            casCookie.isNotEmpty) {
+          unawaited(
+            AuthService.instance
+                .getLibraryJwt(casCookie)
+                .then((libraryJwt) async {
+              if (libraryJwt != null && libraryJwt.isNotEmpty) {
+                await authProvider.updateLibraryJwt(libraryJwt);
+              }
+            }),
+          );
+        }
 
         if (!mounted) return;
 
@@ -76,17 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         context.go('/');
-
-        // 后台自动获取图书馆 JWT（不阻塞主流程）
-        if (result.cookie != null) {
-          AuthService.instance
-              .getLibraryJwt(result.cookie!)
-              .then((jwt) async {
-            if (jwt != null && jwt.isNotEmpty) {
-              await authProvider.updateLibraryJwt(jwt);
-            }
-          });
-        }
       }
     } on AuthException catch (e) {
       setState(() {
@@ -275,9 +288,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: context.secondaryColor,
                         ),
                         suffixIcon: GestureDetector(
-                          onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                          onTap: () => setState(
+                              () => _obscurePassword = !_obscurePassword),
                           child: Icon(
-                            _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                            _obscurePassword
+                                ? LucideIcons.eyeOff
+                                : LucideIcons.eye,
                             size: 20,
                             color: context.secondaryColor,
                           ),
@@ -378,7 +394,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 height: 22,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               )
                             : const Text(
@@ -393,19 +410,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 16),
 
-                    // WebView Login Option
-                    Center(
-                      child: TextButton(
-                        onPressed: () => context.go('/cas-auth'),
-                        child: Text(
-                          '使用网页登录',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: context.secondaryColor,
+                    if (!kIsWeb) ...[
+                      // WebView Login Option
+                      Center(
+                        child: TextButton(
+                          onPressed: () => context.go('/cas-auth'),
+                          child: Text(
+                            '使用网页登录',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: context.secondaryColor,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

@@ -90,7 +90,8 @@ class BusUtils {
             final endMinutes = _parseTimeToMinutes(parts[1]);
             final scheduleMinutes = schedule.departureMinutes;
 
-            if (scheduleMinutes < startMinutes || scheduleMinutes > endMinutes) {
+            if (scheduleMinutes < startMinutes ||
+                scheduleMinutes > endMinutes) {
               continue;
             }
           }
