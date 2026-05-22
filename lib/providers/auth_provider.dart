@@ -57,6 +57,8 @@ class AuthProvider extends ChangeNotifier {
     await prefs.setString('user_name', userName);
     if (cookie != null) {
       await prefs.setString('auth_cookie', cookie);
+    } else {
+      await prefs.remove('auth_cookie');
     }
     await prefs.remove('library_jwt');
 
