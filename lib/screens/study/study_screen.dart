@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,6 +13,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/library_service.dart';
 import '../../widgets/cards.dart';
+import '../../widgets/header.dart';
 import '../../widgets/indicators.dart';
 import '../../widgets/favorite_button.dart';
 
@@ -73,8 +75,7 @@ class _StudyScreenState extends State<StudyScreen> {
     });
 
     try {
-      final jwt =
-          await AuthService.instance.getLibraryJwt(auth.authCookie!);
+      final jwt = await AuthService.instance.getLibraryJwt(auth.authCookie!);
       if (!mounted) return;
 
       if (jwt != null && jwt.isNotEmpty) {
@@ -233,41 +234,23 @@ class _StudyScreenState extends State<StudyScreen> {
   }
 
   Widget _buildPageHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '自习',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary.resolve(context),
-                  ),
+    return PageHeader(
+      title: '自习',
+      subtitle: '图书馆座位',
+      actions: _seats.isEmpty
+          ? null
+          : [
+              CupertinoButton(
+                minimumSize: const Size(36, 36),
+                padding: EdgeInsets.zero,
+                onPressed: () => _loadSeats(forceRefresh: true),
+                child: Icon(
+                  LucideIcons.refreshCw,
+                  size: 20,
+                  color: AppColors.textSecondary.resolve(context),
                 ),
-                Text(
-                  '图书馆座位',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary.resolve(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_seats.isNotEmpty)
-            IconButton(
-              onPressed: () => _loadSeats(forceRefresh: true),
-              icon: const Icon(LucideIcons.refreshCw, size: 20),
-              color: AppColors.textSecondary.resolve(context),
-              tooltip: '刷新',
-            ),
-        ],
-      ),
+              ),
+            ],
     );
   }
 
@@ -300,11 +283,6 @@ class _StudyScreenState extends State<StudyScreen> {
   Widget _buildOverviewCard(int totalSeats, int freeSeats) {
     final occupancy =
         totalSeats > 0 ? (totalSeats - freeSeats) / totalSeats : 0.0;
-    final occupancyColor = occupancy < 0.6
-        ? AppColors.okGreen.dark
-        : occupancy < 0.85
-            ? AppColors.autumn.dark
-            : AppColors.summer.dark;
 
     return ForeheadCard(
       foreheadColor: AppColors.winter,
@@ -313,8 +291,7 @@ class _StudyScreenState extends State<StudyScreen> {
         child: Row(
           children: [
             Icon(LucideIcons.bookOpen,
-                size: 18,
-                color: AppColors.textPrimary.resolve(context)),
+                size: 18, color: AppColors.textPrimary.resolve(context)),
             const SizedBox(width: 8),
             Text(
               '座位概览',
@@ -440,8 +417,7 @@ class _StatusView extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
