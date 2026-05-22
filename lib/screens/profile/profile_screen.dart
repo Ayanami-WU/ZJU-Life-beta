@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -63,7 +64,9 @@ class ProfileScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
-                            theme.isDarkMode ? LucideIcons.moon : LucideIcons.sun,
+                            theme.isDarkMode
+                                ? LucideIcons.moon
+                                : LucideIcons.sun,
                             size: 20,
                             color: context.primaryColor,
                           ),
@@ -77,11 +80,12 @@ class ProfileScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        Switch(
-                          value: theme.isDarkMode,
-                          onChanged: (_) => theme.toggleTheme(),
-                          activeTrackColor: context.primaryColor,
-                          thumbColor: WidgetStateProperty.all(Colors.white),
+                        IgnorePointer(
+                          child: CupertinoSwitch(
+                            value: theme.isDarkMode,
+                            onChanged: (_) {},
+                            activeTrackColor: context.primaryColor,
+                          ),
                         ),
                       ],
                     ),
@@ -114,14 +118,19 @@ class ProfileScreen extends StatelessWidget {
 
                   // Logout
                   if (auth.isAuthenticated) ...[
-                    OutlinedButton(
-                      onPressed: () => auth.logout(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        foregroundColor: AppTheme.error,
-                        side: const BorderSide(color: AppTheme.error),
+                    ModernCard(
+                      onTap: () => auth.logout(),
+                      showShadow: false,
+                      child: const Center(
+                        child: Text(
+                          '退出登录',
+                          style: TextStyle(
+                            color: AppTheme.error,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                      child: const Text('退出登录'),
                     ),
                   ],
 
@@ -236,7 +245,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoritesSection(BuildContext context, FavoritesProvider favorites) {
+  Widget _buildFavoritesSection(
+      BuildContext context, FavoritesProvider favorites) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,7 +255,8 @@ class ProfileScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: SectionHeader(title: '我的收藏 (${favorites.favorites.length})'),
+              child:
+                  SectionHeader(title: '我的收藏 (${favorites.favorites.length})'),
             ),
             if (favorites.favorites.isNotEmpty)
               TextButton(
@@ -270,16 +281,16 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...favorites.favorites.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: FavoriteItemCard(
-            item: item,
-            onTap: () => _navigateToFavorite(context, item),
-            onRemove: () {
-              HapticFeedback.lightImpact();
-              favorites.removeFavorite(item.id);
-            },
-          ),
-        )),
+              padding: const EdgeInsets.only(bottom: 10),
+              child: FavoriteItemCard(
+                item: item,
+                onTap: () => _navigateToFavorite(context, item),
+                onRemove: () {
+                  HapticFeedback.lightImpact();
+                  favorites.removeFavorite(item.id);
+                },
+              ),
+            )),
       ],
     );
   }
@@ -320,23 +331,24 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  void _showClearConfirmDialog(BuildContext context, FavoritesProvider favorites) {
-    showDialog(
+  void _showClearConfirmDialog(
+      BuildContext context, FavoritesProvider favorites) {
+    showCupertinoDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => CupertinoAlertDialog(
         title: const Text('清空收藏'),
         content: const Text('确定要清空所有收藏吗？此操作无法撤销。'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('取消'),
           ),
-          TextButton(
+          CupertinoDialogAction(
+            isDestructiveAction: true,
             onPressed: () {
               favorites.clear();
-              Navigator.pop(context);
+              Navigator.of(dialogContext).pop();
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
             child: const Text('清空'),
           ),
         ],

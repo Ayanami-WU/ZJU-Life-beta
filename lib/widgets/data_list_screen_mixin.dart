@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 /// Mixin that provides common functionality for data list screens
@@ -150,10 +151,8 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
 
       if (index != -1 && scrollController.hasClients) {
         // Calculate scroll position
-        final targetOffset = headerHeight +
-                           additionalScrollOffset +
-                           (index * cardHeight) -
-                           20;
+        final targetOffset =
+            headerHeight + additionalScrollOffset + (index * cardHeight) - 20;
 
         // Smooth scroll to target position
         scrollController.animateTo(
@@ -207,7 +206,8 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
           else
             buildListContent(
               filteredItems,
-              padding: listPadding ?? const EdgeInsets.symmetric(horizontal: 20),
+              padding:
+                  listPadding ?? const EdgeInsets.symmetric(horizontal: 20),
             ),
 
           // Bottom padding
@@ -226,15 +226,15 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+            CupertinoActivityIndicator(
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
               '加载中...',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).textTheme.bodySmall?.color,
-              ),
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
             ),
           ],
         ),
@@ -251,7 +251,7 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 64,
                 color: Colors.orange,
@@ -266,8 +266,8 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
                 _error ?? '未知错误',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -304,8 +304,8 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
               Text(
                 '请稍后重试',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -320,7 +320,8 @@ mixin DataListScreenMixin<T, W extends StatefulWidget> on State<W> {
   }
 
   /// Build list content
-  Widget buildListContent(List<T> filteredItems, {required EdgeInsets padding}) {
+  Widget buildListContent(List<T> filteredItems,
+      {required EdgeInsets padding}) {
     return SliverPadding(
       padding: padding,
       sliver: SliverList(

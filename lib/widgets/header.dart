@@ -29,7 +29,7 @@ class ZJUHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: context.backgroundColor,
+      color: context.groupedBackgroundColor,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Row(
         children: [
@@ -91,8 +91,7 @@ class ZJUHeader extends StatelessWidget implements PreferredSizeWidget {
                             color: context.primaryColor,
                           ),
                         ),
-                        Text('浙大生活助手',
-                            style: context.textTheme.bodySmall),
+                        Text('浙大生活助手', style: context.textTheme.bodySmall),
                       ],
                     ),
                   ),
@@ -123,7 +122,7 @@ class PageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -134,17 +133,21 @@ class PageHeader extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 34,
                     fontWeight: FontWeight.w700,
+                    height: 1.08,
                     color: AppColors.textPrimary.resolve(context),
                   ),
                 ),
                 if (subtitle != null)
-                  Text(
-                    subtitle!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary.resolve(context),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      subtitle!,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: AppColors.textSecondary.resolve(context),
+                      ),
                     ),
                   ),
               ],
@@ -169,8 +172,12 @@ class _ThemeToggleButton extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: context.cardColor,
+          color: context.secondaryBackgroundColor,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: context.dividerColor.withValues(alpha: 0.5),
+            width: 0.5,
+          ),
           boxShadow: context.cardShadow,
         ),
         child: Icon(
