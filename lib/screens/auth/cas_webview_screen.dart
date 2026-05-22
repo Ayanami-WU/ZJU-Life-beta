@@ -117,8 +117,6 @@ class _CasWebViewScreenState extends State<CasWebViewScreen> {
             uri?.queryParameters['cas'] ?? uri?.queryParameters['ticket'];
         if (ticket == null || ticket.isEmpty) return;
 
-        _isCompleted = true;
-
         // 尝试从页面获取用户名
         final userName = await _controller!.runJavaScriptReturningResult(
             'document.querySelector(".user-name")?.innerText || ""');
@@ -131,7 +129,9 @@ class _CasWebViewScreenState extends State<CasWebViewScreen> {
           ticket,
           userName: userName.toString().replaceAll('"', ''),
         );
+        _isCompleted = true;
       } catch (e) {
+        _isCompleted = false;
         debugPrint('Error getting user info: $e');
       }
     }

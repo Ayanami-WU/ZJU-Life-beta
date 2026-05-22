@@ -9,5 +9,5 @@ String appHashUrl(String route) {
 }
 
 void replace(String url) {
-  web.window.location.assign(url);
+  web.window.location.replace(url);
 }
