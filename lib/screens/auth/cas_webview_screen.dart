@@ -27,6 +27,7 @@ class _CasWebViewScreenState extends State<CasWebViewScreen> {
   WebViewController? _controller;
   bool _isLoading = true;
   bool _isCompleted = false;
+  bool _isCompletingLogin = false;
   String _currentUrl = '';
   String? _errorMessage;
 
@@ -89,7 +90,7 @@ class _CasWebViewScreenState extends State<CasWebViewScreen> {
     }
 
     try {
-      await _completeLogin(ticket, userName: '统一身份认证用户');
+      await _completeLoginOnce(ticket, userName: '统一身份认证用户');
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -125,15 +126,29 @@ class _CasWebViewScreenState extends State<CasWebViewScreen> {
         final _ =
             await _controller!.runJavaScriptReturningResult('document.cookie');
 
-        await _completeLogin(
+        await _completeLoginOnce(
           ticket,
           userName: userName.toString().replaceAll('"', ''),
         );
-        _isCompleted = true;
       } catch (e) {
-        _isCompleted = false;
         debugPrint('Error getting user info: $e');
       }
+    }
+  }
+
+  Future<void> _completeLoginOnce(
+    String ticket, {
+    required String userName,
+  }) async {
+    if (_isCompleted || _isCompletingLogin) return;
+
+    _isCompletingLogin = true;
+    try {
+      await _completeLogin(ticket, userName: userName);
+      _isCompleted = true;
+    } catch (_) {
+      _isCompletingLogin = false;
+      rethrow;
     }
   }
 

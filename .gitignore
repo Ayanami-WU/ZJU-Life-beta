@@ -15,6 +15,7 @@ AGENT.md
 AGENTS.md
 AGENTS.md.bak
 CLAUDE.md
+.claude/
 
 # IntelliJ related
 *.iml

@@ -136,77 +136,93 @@ class CupertinoGroupRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolvedIconColor = iconColor ?? context.primaryColor;
     final titleColor = destructive ? AppTheme.error : context.textColor;
-    final content = Padding(
+    final resolvedLeading = leading ??
+        (icon == null
+            ? null
+            : _GroupedIcon(
+                icon: icon!,
+                color: resolvedIconColor,
+              ));
+    final mainContent = Row(
+      children: [
+        if (resolvedLeading != null) ...[
+          resolvedLeading,
+          const SizedBox(width: 12),
+        ],
+        Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: titleColor,
+                  height: 1.2,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 3),
+                Text(
+                  subtitle!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.22,
+                    color: context.secondaryColor,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+    final tappableContent = onTap == null
+        ? mainContent
+        : CupertinoButton(
+            padding: EdgeInsets.zero,
+            minimumSize: Size.zero,
+            pressedOpacity: 0.72,
+            alignment: Alignment.centerLeft,
+            onPressed: onTap,
+            child: mainContent,
+          );
+    final chevron = Icon(
+      LucideIcons.chevronRight,
+      size: 18,
+      color: context.secondaryColor.withValues(alpha: 0.62),
+    );
+
+    return Padding(
       padding: padding,
       child: Row(
         children: [
-          leading ??
-              (icon == null
-                  ? const SizedBox.shrink()
-                  : _GroupedIcon(
-                      icon: icon!,
-                      color: resolvedIconColor,
-                    )),
-          if (leading != null || icon != null) const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: titleColor,
-                    height: 1.2,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.22,
-                      color: context.secondaryColor,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+          Expanded(child: tappableContent),
           if (trailing != null) ...[
             const SizedBox(width: 10),
             trailing!,
           ],
           if (showChevron) ...[
             const SizedBox(width: 6),
-            Icon(
-              LucideIcons.chevronRight,
-              size: 18,
-              color: context.secondaryColor.withValues(alpha: 0.62),
-            ),
+            if (onTap == null)
+              chevron
+            else
+              CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                pressedOpacity: 0.72,
+                onPressed: onTap,
+                child: chevron,
+              ),
           ],
         ],
       ),
-    );
-
-    if (onTap == null) {
-      return content;
-    }
-
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      minimumSize: Size.zero,
-      pressedOpacity: 0.72,
-      alignment: Alignment.centerLeft,
-      onPressed: onTap,
-      child: content,
     );
   }
 }

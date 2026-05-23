@@ -74,6 +74,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 .getLibraryJwt(casCookie)
                 .then((libraryJwt) async {
               if (libraryJwt != null && libraryJwt.isNotEmpty) {
+                if (!authProvider.isAuthenticated ||
+                    authProvider.authCookie != casCookie) {
+                  return;
+                }
                 await authProvider.updateLibraryJwt(libraryJwt);
               }
             }),

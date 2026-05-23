@@ -286,6 +286,7 @@ class LibraryService {
   }) async {
     final summaries = <LibrarySeat>[];
     const pageSize = 200;
+    const maxPages = 50;
     var page = 1;
     var total = 0;
 
@@ -295,12 +296,14 @@ class LibraryService {
         query.toReserveListPayload(page: page, size: pageSize),
       );
       final pageRooms = parseReserveRoomList(response);
+      if (pageRooms.isEmpty) break;
+
       summaries.addAll(pageRooms);
 
       final data = response['data'];
       total = data is Map ? _parseInt(data['count']) : summaries.length;
       page += 1;
-    } while (summaries.length < total);
+    } while (summaries.length < total && page <= maxPages);
 
     summaries.sort(
       (a, b) => '${a.premisesName}${a.storeyName}${a.name}'.compareTo(
