@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -9,6 +10,7 @@ import '../../models/favorite.dart';
 import '../../services/bus_service.dart';
 import '../../widgets/header.dart';
 import '../../widgets/cards.dart';
+import '../../widgets/cupertino_grouped.dart';
 import '../../widgets/indicators.dart';
 import '../../widgets/favorite_button.dart';
 import '../../design/colors.dart';
@@ -28,7 +30,8 @@ class BusScreen extends StatefulWidget {
   State<BusScreen> createState() => _BusScreenState();
 }
 
-class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMixin {
+class _BusScreenState extends State<BusScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
   final BusService _busService = BusService();
@@ -51,14 +54,20 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
     super.initState();
     _highlightedRouteId = widget.highlightRouteId;
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_handleTabChange);
     _loadData();
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _scrollController.dispose();
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _handleTabChange() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadData() async {
@@ -97,13 +106,15 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         final actualIndex = index >= _shuttleRoutes.length
             ? index - _shuttleRoutes.length
             : index;
-        final targetOffset = headerHeight + tabHeight + (actualIndex * cardHeight) - 20;
+        final targetOffset =
+            headerHeight + tabHeight + (actualIndex * cardHeight) - 20;
 
         // 平滑滚动到目标位置
         Future.delayed(const Duration(milliseconds: 300), () {
           if (_scrollController.hasClients) {
             _scrollController.animateTo(
-              targetOffset.clamp(0.0, _scrollController.position.maxScrollExtent),
+              targetOffset.clamp(
+                  0.0, _scrollController.position.maxScrollExtent),
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeOutCubic,
             );
@@ -128,7 +139,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
       _isLoadingShuttle = true;
       _shuttleError = null;
     });
-    
+
     try {
       final routes = await _busService.fetchBusRoutes(BusType.campusShuttle);
       if (!mounted) return;
@@ -151,7 +162,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
       _isLoadingInternal = true;
       _internalError = null;
     });
-    
+
     try {
       final routes = await _busService.fetchBusRoutes(BusType.campusInternal);
       if (!mounted) return;
@@ -181,37 +192,31 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
               subtitle: '校区通勤',
             ),
 
-            // Tab Bar
+            // iOS-style segmented control
             Container(
-              margin: EdgeInsets.symmetric(horizontal: DesignConstants.pagePadding.horizontal / 2, vertical: DesignConstants.spacingM),
-              decoration: BoxDecoration(
-                color: context.cardColor,
-                borderRadius: DesignConstants.cardRadius(),
-                boxShadow: context.cardShadow,
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: context.primaryColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: Colors.white,
-                unselectedLabelColor: context.secondaryColor,
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                dividerColor: Colors.transparent,
-                padding: const EdgeInsets.all(4),
-                tabs: const [
-                  Tab(text: '校区班车'),
-                  Tab(text: '校内环线'),
-                ],
+              margin: EdgeInsets.symmetric(
+                  horizontal: DesignConstants.pagePadding.horizontal / 2,
+                  vertical: DesignConstants.spacingM),
+              child: CupertinoSlidingSegmentedControl<int>(
+                groupValue: _tabController.index,
+                backgroundColor: context.secondaryBackgroundColor,
+                thumbColor: context.cardColor,
+                padding: const EdgeInsets.all(3),
+                children: const {
+                  0: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('校区班车'),
+                  ),
+                  1: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('校内环线'),
+                  ),
+                },
+                onValueChanged: (value) {
+                  if (value == null) return;
+                  HapticFeedback.selectionClick();
+                  _tabController.animateTo(value);
+                },
               ),
             ),
 
@@ -238,7 +243,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         child: LoadingIndicator(message: '加载中...'),
       );
     }
-    
+
     if (_shuttleError != null) {
       return Center(
         child: ErrorState(
@@ -247,7 +252,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         ),
       );
     }
-    
+
     if (_shuttleRoutes.isEmpty) {
       return Center(
         child: EmptyState(
@@ -261,7 +266,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         ),
       );
     }
-    
+
     return RefreshIndicator(
       onRefresh: _loadShuttleData,
       color: context.primaryColor,
@@ -291,7 +296,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         child: LoadingIndicator(message: '加载中...'),
       );
     }
-    
+
     if (_internalError != null) {
       return Center(
         child: ErrorState(
@@ -300,7 +305,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         ),
       );
     }
-    
+
     if (_internalRoutes.isEmpty) {
       return Center(
         child: EmptyState(
@@ -314,7 +319,7 @@ class _BusScreenState extends State<BusScreen> with SingleTickerProviderStateMix
         ),
       );
     }
-    
+
     return RefreshIndicator(
       onRefresh: _loadInternalData,
       color: context.primaryColor,
@@ -347,7 +352,7 @@ class _ShuttleRouteCard extends StatelessWidget {
     required this.route,
     this.isHighlighted = false,
   });
-  
+
   // 校区坐标
   static const Map<String, Map<String, double>> _campusLocations = {
     '紫金港': {'lat': 30.308597, 'lng': 120.087424},
@@ -357,7 +362,7 @@ class _ShuttleRouteCard extends StatelessWidget {
     '海宁': {'lat': 30.463889, 'lng': 120.690833},
     '舟山': {'lat': 29.946390, 'lng': 122.101389},
   };
-  
+
   String? _extractDestination() {
     // 从线路名称中提取目的地校区
     for (final campus in _campusLocations.keys) {
@@ -367,139 +372,105 @@ class _ShuttleRouteCard extends StatelessWidget {
     }
     return null;
   }
-  
+
   Future<void> _openNavigation(BuildContext context) async {
     final destination = _extractDestination();
     if (destination == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法识别目的地校区')),
+      showCupertinoDialog<void>(
+        context: context,
+        builder: (dialogContext) => CupertinoAlertDialog(
+          title: const Text('无法导航'),
+          content: const Text('无法识别目的地校区'),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('好'),
+            ),
+          ],
+        ),
       );
       return;
     }
-    
+
     final coords = _campusLocations[destination]!;
     final lat = coords['lat']!;
     final lng = coords['lng']!;
-    
+
     // 显示导航选项
     _showNavigationOptions(context, destination, lat, lng);
   }
-  
-  void _showNavigationOptions(BuildContext context, String destination, double lat, double lng) {
-    final brightness = Theme.of(context).brightness;
-    
-    showModalBottomSheet(
+
+  void _showNavigationOptions(
+      BuildContext context, String destination, double lat, double lng) {
+    showCupertinoModalPopup<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: brightness == Brightness.dark
-              ? const Color(0xFF1E293B)
-              : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: brightness == Brightness.dark
-                      ? Colors.white24
-                      : Colors.black12,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                '导航至 $destination',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: brightness == Brightness.dark
-                      ? Colors.white
-                      : const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _NavigationOption(
-                icon: LucideIcons.navigation,
-                label: '高德地图',
-                color: AppColors.cyan.dark,
-                onTap: () {
-                  Navigator.pop(context);
-                  _launchAmap(lat, lng, destination);
-                },
-              ),
-              _NavigationOption(
-                icon: LucideIcons.map,
-                label: '百度地图',
-                color: AppColors.peach.dark,
-                onTap: () {
-                  Navigator.pop(context);
-                  _launchBaidu(lat, lng, destination);
-                },
-              ),
-              _NavigationOption(
-                icon: LucideIcons.globe,
-                label: 'Apple/Google 地图',
-                color: AppColors.okGreen.dark,
-                onTap: () {
-                  Navigator.pop(context);
-                  _launchMaps(lat, lng, destination);
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
+      builder: (sheetContext) => CupertinoActionSheet(
+        title: Text('导航至 $destination'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(sheetContext).pop();
+              _launchAmap(lat, lng, destination);
+            },
+            child: const Text('高德地图'),
           ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(sheetContext).pop();
+              _launchBaidu(lat, lng, destination);
+            },
+            child: const Text('百度地图'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(sheetContext).pop();
+              _launchMaps(lat, lng, destination);
+            },
+            child: const Text('Apple/Google 地图'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(sheetContext).pop(),
+          child: const Text('取消'),
         ),
       ),
     );
   }
-  
+
   Future<void> _launchAmap(double lat, double lng, String name) async {
     // 高德地图
     final amapUrl = Uri.parse(
-      'amapuri://route/plan/?dlat=$lat&dlon=$lng&dname=$name&dev=0&t=0'
-    );
+        'amapuri://route/plan/?dlat=$lat&dlon=$lng&dname=$name&dev=0&t=0');
     final webUrl = Uri.parse(
-      'https://uri.amap.com/navigation?to=$lng,$lat,$name&mode=car&coordinate=gaode'
-    );
-    
+        'https://uri.amap.com/navigation?to=$lng,$lat,$name&mode=car&coordinate=gaode');
+
     if (await canLaunchUrl(amapUrl)) {
       await launchUrl(amapUrl);
     } else {
       await launchUrl(webUrl, mode: LaunchMode.externalApplication);
     }
   }
-  
+
   Future<void> _launchBaidu(double lat, double lng, String name) async {
     // 百度地图
     final baiduUrl = Uri.parse(
-      'baidumap://map/direction?destination=latlng:$lat,$lng|name:$name&coord_type=gcj02&mode=driving'
-    );
+        'baidumap://map/direction?destination=latlng:$lat,$lng|name:$name&coord_type=gcj02&mode=driving');
     final webUrl = Uri.parse(
-      'https://api.map.baidu.com/direction?destination=latlng:$lat,$lng|name:$name&coord_type=gcj02&mode=driving&output=html'
-    );
-    
+        'https://api.map.baidu.com/direction?destination=latlng:$lat,$lng|name:$name&coord_type=gcj02&mode=driving&output=html');
+
     if (await canLaunchUrl(baiduUrl)) {
       await launchUrl(baiduUrl);
     } else {
       await launchUrl(webUrl, mode: LaunchMode.externalApplication);
     }
   }
-  
+
   Future<void> _launchMaps(double lat, double lng, String name) async {
     // Apple Maps / Google Maps
-    final url = Uri.parse(
-      'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d'
-    );
+    final url = Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
     await launchUrl(url, mode: LaunchMode.externalApplication);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final nextSchedule = _getNextSchedule();
@@ -507,7 +478,7 @@ class _ShuttleRouteCard extends StatelessWidget {
     return AnimatedContainer(
       duration: DesignConstants.highlightAnimationDuration,
       decoration: BoxDecoration(
-        borderRadius: DesignConstants.cardRadius(),
+        borderRadius: BorderRadius.circular(12),
         border: isHighlighted
             ? Border.all(
                 color: context.primaryColor,
@@ -515,162 +486,62 @@ class _ShuttleRouteCard extends StatelessWidget {
               )
             : null,
       ),
-      child: RoundCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: CupertinoGroupSection(
+        children: [
+          CupertinoGroupRow(
+            icon: LucideIcons.bus,
+            iconColor: AppColors.cyan.dark,
+            title: route.name,
+            subtitle: route.notes,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const IconBox(
-                  icon: LucideIcons.bus,
-                  color: AppColors.cyan,
+                _RouteTag(text: route.routeNumber),
+                const SizedBox(width: 8),
+                FavoriteButton(
+                  itemId: 'bus_${route.id}',
+                  type: FavoriteType.busRoute,
+                  title: route.name,
+                  subtitle: route.routeNumber,
+                  data: {
+                    'routeNumber': route.routeNumber,
+                    'scheduleCount': route.schedules.length,
+                  },
+                  size: 22,
                 ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: context.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            route.routeNumber,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: context.primaryColor,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            route.name,
-                            style: context.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        // 收藏按钮
-                        FavoriteButton(
-                          itemId: 'bus_${route.id}',
-                          type: FavoriteType.busRoute,
-                          title: route.name,
-                          subtitle: route.routeNumber,
-                          data: {
-                            'routeNumber': route.routeNumber,
-                            'scheduleCount': route.schedules.length,
-                          },
-                          size: 22,
-                        ),
-                      ],
-                    ),
-                    if (route.notes != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        route.notes!,
-                        style: context.textTheme.bodySmall,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          if (nextSchedule != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: context.backgroundColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    LucideIcons.clock,
-                    size: 16,
-                    color: AppColors.okGreen.dark,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '下一班：',
-                    style: context.textTheme.bodySmall,
-                  ),
-                  Text(
-                    nextSchedule.departureTime,
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.okGreen.dark,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '共 ${route.schedules.length} 班',
-                    style: context.textTheme.bodySmall,
-                  ),
-                ],
+          if (nextSchedule != null)
+            CupertinoGroupRow(
+              icon: LucideIcons.clock,
+              iconColor: AppColors.okGreen.dark,
+              title: '下一班',
+              subtitle: '共 ${route.schedules.length} 班',
+              trailing: CupertinoMetricPill(
+                text: nextSchedule.departureTime,
+                color: AppColors.okGreen.dark,
               ),
             ),
-          ],
-          // 导航按钮
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _openNavigation(context);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.cyan.resolve(context).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.navigation,
-                          size: 16,
-                          color: AppColors.cyan.dark,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '导航到校区',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.cyan.dark,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          CupertinoGroupRow(
+            icon: LucideIcons.navigation,
+            iconColor: AppColors.cyan.dark,
+            title: '导航到校区',
+            showChevron: true,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              _openNavigation(context);
+            },
           ),
         ],
       ),
-      ),
     );
   }
-  
+
   BusSchedule? _getNextSchedule() {
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
-    
+
     for (final schedule in route.schedules) {
       if (schedule.departureMinutes > currentMinutes) {
         return schedule;
@@ -680,68 +551,28 @@ class _ShuttleRouteCard extends StatelessWidget {
   }
 }
 
-/// 导航选项按钮
-class _NavigationOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  
-  const _NavigationOption({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-  
+class _RouteTag extends StatelessWidget {
+  final String text;
+
+  const _RouteTag({required this.text});
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: DesignConstants.cardRadius(),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 20, color: color),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : const Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-              Icon(
-                LucideIcons.chevronRight,
-                size: 18,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white60
-                    : const Color(0xFF94A3B8),
-              ),
-            ],
-          ),
+    final resolvedColor = context.primaryColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: resolvedColor.withValues(alpha: context.isDark ? 0.2 : 0.1),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: resolvedColor,
+          height: 1,
         ),
       ),
     );
@@ -764,7 +595,7 @@ class _InternalRouteCard extends StatefulWidget {
 
 class _InternalRouteCardState extends State<_InternalRouteCard> {
   bool _isExpanded = false;
-  
+
   @override
   Widget build(BuildContext context) {
     final nextSchedule = _getNextSchedule();
@@ -781,55 +612,62 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
               )
             : null,
       ),
-      child: RoundCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            // 主要信息区域
-            InkWell(
-              onTap: () => setState(() => _isExpanded = !_isExpanded),
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconBox(
-                          icon: isClockwise ? LucideIcons.rotateCw : LucideIcons.rotateCcw,
-                          color: isClockwise ? AppColors.okGreen : AppColors.cyan,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: (isClockwise ? AppColors.okGreen : AppColors.cyan).resolve(context).withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      widget.route.routeNumber,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: isClockwise ? AppColors.okGreen.dark : AppColors.cyan.dark,
-                                      ),
+      child: CupertinoGroupSection(
+        children: [
+          // 主要信息区域
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconBox(
+                        icon: isClockwise
+                            ? LucideIcons.rotateCw
+                            : LucideIcons.rotateCcw,
+                        color: isClockwise ? AppColors.okGreen : AppColors.cyan,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (isClockwise
+                                            ? AppColors.okGreen
+                                            : AppColors.cyan)
+                                        .resolve(context)
+                                        .withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    widget.route.routeNumber,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: isClockwise
+                                          ? AppColors.okGreen.dark
+                                          : AppColors.cyan.dark,
                                     ),
                                   ),
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     widget.route.name,
-                                    style: context.textTheme.bodyLarge?.copyWith(
+                                    style:
+                                        context.textTheme.bodyLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -845,7 +683,9 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
                         ),
                       ),
                       Icon(
-                        _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                        _isExpanded
+                            ? LucideIcons.chevronUp
+                            : LucideIcons.chevronDown,
                         color: context.secondaryColor,
                         size: 20,
                       ),
@@ -893,10 +733,9 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
               ),
             ),
           ),
-          
+
           // 展开区域 - 线路详情
           if (_isExpanded) ...[
-            Divider(height: 1, color: context.dividerColor),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -925,7 +764,7 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  
+
                   // 发车时刻表
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -958,22 +797,26 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
                           color: isNext
                               ? AppColors.okGreen.dark.withValues(alpha: 0.15)
                               : isPast
-                                  ? context.backgroundColor.withValues(alpha: 0.5)
+                                  ? context.backgroundColor
+                                      .withValues(alpha: 0.5)
                                   : context.backgroundColor,
                           borderRadius: BorderRadius.circular(6),
                           border: isNext
-                              ? Border.all(color: AppColors.okGreen.dark, width: 1)
+                              ? Border.all(
+                                  color: AppColors.okGreen.dark, width: 1)
                               : null,
                         ),
                         child: Text(
                           schedule.departureTime,
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: isNext ? FontWeight.w600 : FontWeight.w500,
+                            fontWeight:
+                                isNext ? FontWeight.w600 : FontWeight.w500,
                             color: isNext
                                 ? AppColors.okGreen.dark
                                 : isPast
-                                    ? context.secondaryColor.withValues(alpha: 0.5)
+                                    ? context.secondaryColor
+                                        .withValues(alpha: 0.5)
                                     : context.textColor,
                           ),
                         ),
@@ -986,14 +829,13 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
           ],
         ],
       ),
-      ),
     );
   }
 
   BusSchedule? _getNextSchedule() {
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
-    
+
     for (final schedule in widget.route.schedules) {
       if (schedule.departureMinutes > currentMinutes) {
         return schedule;
@@ -1001,18 +843,18 @@ class _InternalRouteCardState extends State<_InternalRouteCard> {
     }
     return null;
   }
-  
+
   bool _isPastTime(BusSchedule schedule) {
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
     return schedule.departureMinutes <= currentMinutes;
   }
-  
+
   String _getWaitTime(BusSchedule schedule) {
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
     final waitMinutes = schedule.departureMinutes - currentMinutes;
-    
+
     if (waitMinutes <= 0) return '即将发车';
     if (waitMinutes < 60) return '约 $waitMinutes 分钟';
     final hours = waitMinutes ~/ 60;

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +13,7 @@ import '../../providers/favorites_provider.dart';
 import '../../widgets/header.dart';
 import '../../widgets/cards.dart';
 import '../../widgets/favorite_button.dart';
+import '../../widgets/cupertino_grouped.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -46,82 +48,61 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 28),
                   ],
 
-                  // Settings
-                  const SectionHeader(title: '设置'),
-                  const SizedBox(height: 12),
-
-                  // Theme Toggle
-                  ModernCard(
-                    onTap: () => theme.toggleTheme(),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: context.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            theme.isDarkMode ? LucideIcons.moon : LucideIcons.sun,
-                            size: 20,
-                            color: context.primaryColor,
+                  CupertinoGroupSection(
+                    header: '设置',
+                    children: [
+                      CupertinoGroupRow(
+                        icon: theme.isDarkMode
+                            ? LucideIcons.moon
+                            : LucideIcons.sun,
+                        iconColor: context.primaryColor,
+                        title: '深色模式',
+                        onTap: () => theme.toggleTheme(),
+                        trailing: IgnorePointer(
+                          child: CupertinoSwitch(
+                            value: theme.isDarkMode,
+                            onChanged: (_) {},
+                            activeTrackColor: context.primaryColor,
                           ),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            '深色模式',
-                            style: context.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        Switch(
-                          value: theme.isDarkMode,
-                          onChanged: (_) => theme.toggleTheme(),
-                          activeTrackColor: context.primaryColor,
-                          thumbColor: WidgetStateProperty.all(Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Other Settings
-                  _SettingsItem(
-                    icon: LucideIcons.bell,
-                    label: '提醒设置',
-                    color: AppTheme.accentOrange,
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 10),
-                  _SettingsItem(
-                    icon: LucideIcons.messageSquare,
-                    label: '意见反馈',
-                    color: AppTheme.accentGreen,
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 10),
-                  _SettingsItem(
-                    icon: LucideIcons.info,
-                    label: '关于',
-                    color: AppTheme.accentPurple,
-                    onTap: () {},
+                      ),
+                      CupertinoGroupRow(
+                        icon: LucideIcons.bell,
+                        iconColor: AppTheme.accentOrange,
+                        title: '提醒设置',
+                        showChevron: true,
+                        onTap: () {},
+                      ),
+                      CupertinoGroupRow(
+                        icon: LucideIcons.messageSquare,
+                        iconColor: AppTheme.accentGreen,
+                        title: '意见反馈',
+                        showChevron: true,
+                        onTap: () {},
+                      ),
+                      CupertinoGroupRow(
+                        icon: LucideIcons.info,
+                        iconColor: AppTheme.accentPurple,
+                        title: '关于',
+                        showChevron: true,
+                        onTap: () {},
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 28),
 
-                  // Logout
                   if (auth.isAuthenticated) ...[
-                    OutlinedButton(
-                      onPressed: () => auth.logout(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        foregroundColor: AppTheme.error,
-                        side: const BorderSide(color: AppTheme.error),
-                      ),
-                      child: const Text('退出登录'),
+                    CupertinoGroupSection(
+                      children: [
+                        CupertinoGroupRow(
+                          icon: LucideIcons.logOut,
+                          iconColor: AppTheme.error,
+                          title: '退出登录',
+                          destructive: true,
+                          onTap: () => auth.logout(),
+                        ),
+                      ],
                     ),
                   ],
 
@@ -191,6 +172,7 @@ class ProfileScreen extends StatelessWidget {
     }
 
     return ModernCard(
+      gradient: AppTheme.primaryGradient,
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
@@ -198,7 +180,7 @@ class ProfileScreen extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
@@ -221,12 +203,19 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   auth.userName ?? '用户',
-                  style: context.textTheme.headlineSmall,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   auth.userId ?? '',
-                  style: context.textTheme.bodySmall,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.78),
+                  ),
                 ),
               ],
             ),
@@ -236,7 +225,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoritesSection(BuildContext context, FavoritesProvider favorites) {
+  Widget _buildFavoritesSection(
+      BuildContext context, FavoritesProvider favorites) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,7 +235,8 @@ class ProfileScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: SectionHeader(title: '我的收藏 (${favorites.favorites.length})'),
+              child:
+                  SectionHeader(title: '我的收藏 (${favorites.favorites.length})'),
             ),
             if (favorites.favorites.isNotEmpty)
               TextButton(
@@ -270,16 +261,16 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...favorites.favorites.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: FavoriteItemCard(
-            item: item,
-            onTap: () => _navigateToFavorite(context, item),
-            onRemove: () {
-              HapticFeedback.lightImpact();
-              favorites.removeFavorite(item.id);
-            },
-          ),
-        )),
+              padding: const EdgeInsets.only(bottom: 10),
+              child: FavoriteItemCard(
+                item: item,
+                onTap: () => _navigateToFavorite(context, item),
+                onRemove: () {
+                  HapticFeedback.lightImpact();
+                  favorites.removeFavorite(item.id);
+                },
+              ),
+            )),
       ],
     );
   }
@@ -320,72 +311,25 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  void _showClearConfirmDialog(BuildContext context, FavoritesProvider favorites) {
-    showDialog(
+  void _showClearConfirmDialog(
+      BuildContext context, FavoritesProvider favorites) {
+    showCupertinoDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => CupertinoAlertDialog(
         title: const Text('清空收藏'),
         content: const Text('确定要清空所有收藏吗？此操作无法撤销。'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('取消'),
           ),
-          TextButton(
+          CupertinoDialogAction(
+            isDestructiveAction: true,
             onPressed: () {
               favorites.clear();
-              Navigator.pop(context);
+              Navigator.of(dialogContext).pop();
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
             child: const Text('清空'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SettingsItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _SettingsItem({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ModernCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 20, color: color),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              label,
-              style: context.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Icon(
-            LucideIcons.chevronRight,
-            size: 18,
-            color: context.secondaryColor,
           ),
         ],
       ),

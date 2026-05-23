@@ -23,12 +23,12 @@ class DesignConstants {
   // ============ 阴影 ============
 
   /// 标准卡片阴影 (浅色模式)
-  /// Celechron使用: blur 12, offset (0, 6), opacity 0.06
+  /// iOS 风格只保留很轻的层次感，深色模式不使用阴影
   static List<BoxShadow> get cardShadow => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.06),
-          blurRadius: 12,
-          offset: const Offset(0, 6),
+          color: Colors.black.withValues(alpha: 0.045),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
         ),
       ];
 
@@ -79,7 +79,7 @@ class DesignConstants {
 
   /// 按压时的缩放比例
   /// Celechron: 0.95
-  static const double pressedScale = 0.95;
+  static const double pressedScale = 0.96;
 
   /// 悬停时的缩放比例
   static const double hoverScale = 1.02;
@@ -145,7 +145,8 @@ class DesignConstants {
   static const Duration highlightDuration = Duration(seconds: 3);
 
   /// 高亮动画时长
-  static const Duration highlightAnimationDuration = Duration(milliseconds: 300);
+  static const Duration highlightAnimationDuration =
+      Duration(milliseconds: 300);
 
   // ============ 不透明度 ============
 

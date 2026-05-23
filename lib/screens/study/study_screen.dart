@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,17 +13,21 @@ import '../../providers/auth_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/library_service.dart';
 import '../../widgets/cards.dart';
+import '../../widgets/cupertino_grouped.dart';
+import '../../widgets/header.dart';
 import '../../widgets/indicators.dart';
 import '../../widgets/favorite_button.dart';
 
 class StudyScreen extends StatefulWidget {
   final String? highlightRoomId;
   final String? highlightSeatId;
+  final LibraryService? libraryService;
 
   const StudyScreen({
     super.key,
     this.highlightRoomId,
     this.highlightSeatId,
+    this.libraryService,
   });
 
   @override
@@ -30,70 +35,25 @@ class StudyScreen extends StatefulWidget {
 }
 
 class _StudyScreenState extends State<StudyScreen> {
-  final LibraryService _libraryService = LibraryService();
+  late final LibraryService _libraryService;
 
   List<LibrarySeat> _seats = [];
   bool _isLoading = false;
-  bool _isAcquiringJwt = false;
+  bool _isAuthorizing = false;
+  bool _needsLogin = false;
   String? _error;
   String? _highlightedId;
 
   @override
   void initState() {
     super.initState();
+    _libraryService = widget.libraryService ?? LibraryService();
     _highlightedId = widget.highlightRoomId ?? widget.highlightSeatId;
     WidgetsBinding.instance.addPostFrameCallback((_) => _init());
   }
 
   Future<void> _init() async {
-    final auth = context.read<AuthProvider>();
-
-    if (auth.hasLibraryJwt) {
-      _libraryService.setJwtToken(auth.libraryJwt!);
-      _loadSeats();
-    } else if (auth.isAuthenticated && auth.authCookie != null) {
-      // CAS 已登录但无图书馆 JWT → 自动获取
-      await _acquireJwt();
-    } else {
-      // 未登录 CAS
-      setState(() {
-        _error = 'not_logged_in';
-      });
-    }
-  }
-
-  /// 通过 CAS Cookie 自动获取图书馆 JWT
-  Future<void> _acquireJwt() async {
-    final auth = context.read<AuthProvider>();
-    if (auth.authCookie == null) return;
-
-    setState(() {
-      _isAcquiringJwt = true;
-      _error = null;
-    });
-
-    try {
-      final jwt =
-          await AuthService.instance.getLibraryJwt(auth.authCookie!);
-      if (!mounted) return;
-
-      if (jwt != null && jwt.isNotEmpty) {
-        await auth.updateLibraryJwt(jwt);
-        _libraryService.setJwtToken(jwt);
-        await _loadSeats();
-      } else {
-        setState(() {
-          _error = 'jwt_failed';
-          _isAcquiringJwt = false;
-        });
-      }
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _error = 'jwt_failed';
-        _isAcquiringJwt = false;
-      });
-    }
+    await _loadSeats();
   }
 
   Future<void> _loadSeats({bool forceRefresh = false}) async {
@@ -101,13 +61,21 @@ class _StudyScreenState extends State<StudyScreen> {
 
     setState(() {
       _isLoading = true;
+      _needsLogin = false;
       _error = null;
-      _isAcquiringJwt = false;
     });
 
     try {
-      final seats =
-          await _libraryService.fetchAllSeats(useCache: !forceRefresh);
+      final canLoadLibrary = await _ensureLibraryAccess();
+      if (!canLoadLibrary) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final seats = await _libraryService.fetchAllSeats(
+        useCache: !forceRefresh,
+      );
       if (!mounted) return;
       setState(() {
         _seats = seats;
@@ -115,30 +83,69 @@ class _StudyScreenState extends State<StudyScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      final msg = e.toString();
-      if (msg.contains('need_login')) {
-        // JWT 过期，重新获取
-        final auth = context.read<AuthProvider>();
-        await auth.clearLibraryJwt();
-        setState(() => _isLoading = false);
-        if (auth.authCookie != null) {
-          _acquireJwt();
-        } else {
-          setState(() => _error = 'jwt_expired');
-        }
-      } else {
+      final message = e.toString();
+      if (message.contains('图书馆登录已过期') || message.contains('图书馆授权失败')) {
+        await context.read<AuthProvider>().clearLibraryJwt();
+        _libraryService.updateAuthToken(null);
+        if (!mounted) return;
         setState(() {
-          _error = msg;
+          _needsLogin = true;
+          _error = null;
           _isLoading = false;
         });
+        return;
       }
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
+  }
+
+  Future<bool> _ensureLibraryAccess() async {
+    if (widget.libraryService != null) return true;
+
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.ready;
+    if (!mounted) return false;
+
+    final existingToken = authProvider.libraryJwt;
+    if (existingToken != null && existingToken.isNotEmpty) {
+      _libraryService.updateAuthToken(existingToken);
+      return true;
+    }
+
+    final casCookie = authProvider.authCookie;
+    if (!authProvider.isAuthenticated ||
+        casCookie == null ||
+        casCookie.isEmpty) {
+      setState(() {
+        _needsLogin = true;
+        _isAuthorizing = false;
+      });
+      return false;
+    }
+
+    setState(() => _isAuthorizing = true);
+
+    final libraryJwt = await AuthService.instance.getLibraryJwt(casCookie);
+    if (!mounted) return false;
+
+    setState(() => _isAuthorizing = false);
+
+    if (libraryJwt == null || libraryJwt.isEmpty) {
+      throw AuthException('图书馆授权失败，请重新登录');
+    }
+
+    await authProvider.updateLibraryJwt(libraryJwt);
+    if (!mounted) return false;
+
+    _libraryService.updateAuthToken(libraryJwt);
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-
     return Scaffold(
       backgroundColor: context.backgroundColor,
       body: SafeArea(
@@ -150,53 +157,23 @@ class _StudyScreenState extends State<StudyScreen> {
               // 页面标题区
               SliverToBoxAdapter(child: _buildPageHeader()),
 
-              if (_isAcquiringJwt)
-                const SliverFillRemaining(
+              if (_isLoading)
+                SliverFillRemaining(
+                  child: LoadingIndicator(
+                    message: _isAuthorizing ? '正在获取图书馆权限...' : '加载座位数据...',
+                  ),
+                )
+              else if (_needsLogin)
+                SliverFillRemaining(
                   child: _StatusView(
                     icon: LucideIcons.keyRound,
                     iconColor: AppColors.winter,
-                    title: '正在获取权限',
-                    subtitle: '通过统一身份认证自动登录图书馆系统...',
-                    showSpinner: true,
-                  ),
-                )
-              else if (_isLoading)
-                const SliverFillRemaining(
-                  child: LoadingIndicator(message: '加载座位数据...'),
-                )
-              else if (_error == 'not_logged_in')
-                SliverFillRemaining(
-                  child: _StatusView(
-                    icon: LucideIcons.logIn,
-                    iconColor: AppColors.winter,
-                    title: '请先登录',
-                    subtitle: '登录浙大统一身份认证后可查看图书馆座位',
+                    title: '登录后查看座位',
+                    subtitle: '图书馆座位需要使用统一身份认证获取访问凭证',
                     action: FilledButton.icon(
                       onPressed: () => context.go('/login'),
                       icon: const Icon(LucideIcons.logIn, size: 18),
-                      label: const Text('前往登录'),
-                    ),
-                  ),
-                )
-              else if (_error == 'jwt_failed' || _error == 'jwt_expired')
-                SliverFillRemaining(
-                  child: _StatusView(
-                    icon: LucideIcons.alertCircle,
-                    iconColor: AppColors.autumn,
-                    title: _error == 'jwt_expired' ? '登录已过期' : '图书馆授权失败',
-                    subtitle: auth.isAuthenticated
-                        ? '点击重试，或尝试重新登录统一身份认证'
-                        : '请先登录统一身份认证',
-                    action: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (auth.isAuthenticated)
-                          FilledButton.icon(
-                            onPressed: _acquireJwt,
-                            icon: const Icon(LucideIcons.refreshCw, size: 18),
-                            label: const Text('重试'),
-                          ),
-                      ],
+                      label: const Text('去登录'),
                     ),
                   ),
                 )
@@ -206,7 +183,7 @@ class _StudyScreenState extends State<StudyScreen> {
                     icon: LucideIcons.wifiOff,
                     iconColor: AppColors.autumn,
                     title: '加载失败',
-                    subtitle: '请检查网络连接后重试',
+                    subtitle: _error ?? '请检查网络连接后重试',
                     action: FilledButton.icon(
                       onPressed: () => _loadSeats(forceRefresh: true),
                       icon: const Icon(LucideIcons.refreshCw, size: 18),
@@ -233,41 +210,23 @@ class _StudyScreenState extends State<StudyScreen> {
   }
 
   Widget _buildPageHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '自习',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary.resolve(context),
-                  ),
+    return PageHeader(
+      title: '自习',
+      subtitle: '图书馆座位',
+      actions: _seats.isEmpty
+          ? null
+          : [
+              CupertinoButton(
+                minimumSize: const Size(36, 36),
+                padding: EdgeInsets.zero,
+                onPressed: () => _loadSeats(forceRefresh: true),
+                child: Icon(
+                  LucideIcons.refreshCw,
+                  size: 20,
+                  color: AppColors.textSecondary.resolve(context),
                 ),
-                Text(
-                  '图书馆座位',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary.resolve(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_seats.isNotEmpty)
-            IconButton(
-              onPressed: () => _loadSeats(forceRefresh: true),
-              icon: const Icon(LucideIcons.refreshCw, size: 20),
-              color: AppColors.textSecondary.resolve(context),
-              tooltip: '刷新',
-            ),
-        ],
-      ),
+              ),
+            ],
     );
   }
 
@@ -300,70 +259,45 @@ class _StudyScreenState extends State<StudyScreen> {
   Widget _buildOverviewCard(int totalSeats, int freeSeats) {
     final occupancy =
         totalSeats > 0 ? (totalSeats - freeSeats) / totalSeats : 0.0;
+
     final occupancyColor = occupancy < 0.6
         ? AppColors.okGreen.dark
         : occupancy < 0.85
             ? AppColors.autumn.dark
             : AppColors.summer.dark;
 
-    return ForeheadCard(
-      foreheadColor: AppColors.winter,
-      forehead: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Icon(LucideIcons.bookOpen,
-                size: 18,
-                color: AppColors.textPrimary.resolve(context)),
-            const SizedBox(width: 8),
-            Text(
-              '座位概览',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary.resolve(context),
+    return CupertinoGroupSection(
+      header: '座位概览',
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: _OverviewMetric(
+                  label: '空闲座位',
+                  value: '$freeSeats',
+                  color: AppColors.okGreen.dark,
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                child: _OverviewMetric(
+                  label: '总座位',
+                  value: '$totalSeats',
+                  color: AppColors.winter.dark,
+                ),
+              ),
+              Expanded(
+                child: _OverviewMetric(
+                  label: '使用率',
+                  value: '${(occupancy * 100).round()}%',
+                  color: occupancyColor,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: Row(
-          children: [
-            Expanded(
-              child: TwoLineCard(
-                title: '空闲座位',
-                content: '$freeSeats',
-                backgroundColor: AppColors.okGreen,
-                withColoredFont: true,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TwoLineCard(
-                title: '总座位',
-                content: '$totalSeats',
-                backgroundColor: AppColors.winter,
-                withColoredFont: true,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TwoLineCard(
-                title: '使用率',
-                content: '${(occupancy * 100).round()}%',
-                backgroundColor: occupancy < 0.6
-                    ? AppColors.okGreen
-                    : occupancy < 0.85
-                        ? AppColors.autumn
-                        : AppColors.summer,
-                withColoredFont: true,
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
@@ -393,7 +327,6 @@ class _StatusView extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget? action;
-  final bool showSpinner;
 
   const _StatusView({
     required this.icon,
@@ -401,7 +334,6 @@ class _StatusView extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.action,
-    this.showSpinner = false,
   });
 
   @override
@@ -412,36 +344,21 @@ class _StatusView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? iconColor.dark.withValues(alpha: 0.2)
-                        : iconColor.light,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(icon, size: 36, color: iconColor.dark),
-                ),
-                if (showSpinner)
-                  SizedBox(
-                    width: 94,
-                    height: 94,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: iconColor.dark,
-                    ),
-                  ),
-              ],
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? iconColor.dark.withValues(alpha: 0.2)
+                    : iconColor.light,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(icon, size: 36, color: iconColor.dark),
             ),
             const SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Text(
@@ -459,6 +376,43 @@ class _StatusView extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _OverviewMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _OverviewMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary.resolve(context),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -483,7 +437,7 @@ class _SeatCard extends StatelessWidget {
     return AnimatedContainer(
       duration: DesignConstants.highlightAnimationDuration,
       decoration: BoxDecoration(
-        borderRadius: DesignConstants.cardRadius(),
+        borderRadius: BorderRadius.circular(12),
         border: isHighlighted
             ? Border.all(
                 color: context.primaryColor,
@@ -491,70 +445,41 @@ class _SeatCard extends StatelessWidget {
               )
             : null,
       ),
-      child: ListItemCard(
-        leading: IconBox(
-          icon: LucideIcons.bookOpen,
-          color: occupancy < 0.6
-              ? AppColors.okGreen
-              : occupancy < 0.85
-                  ? AppColors.autumn
-                  : AppColors.summer,
-        ),
-        title: seat.name,
-        subtitle: '${seat.typeName}  ·  ${seat.storeyName}',
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+      child: CupertinoGroupSection(
+        children: [
+          CupertinoGroupRow(
+            icon: LucideIcons.bookOpen,
+            iconColor: statusColor,
+            title: seat.name,
+            subtitle: '${seat.typeName}  ·  ${seat.storeyName}',
+            onTap: () =>
+                context.go('/study/room/${Uri.encodeComponent(seat.id)}'),
+            showChevron: true,
+            trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${seat.freeNum}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: statusColor,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '/${seat.totalNum}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary.resolve(context),
-                        ),
-                      ),
-                    ],
-                  ),
+                CupertinoMetricPill(
+                  text: '${seat.freeNum}/${seat.totalNum}',
+                  subtext: seat.status,
+                  color: statusColor,
                 ),
-                Text(
-                  seat.status,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: statusColor,
-                    fontWeight: FontWeight.w500,
-                  ),
+                const SizedBox(width: 8),
+                FavoriteButton(
+                  itemId: 'library_${seat.id}',
+                  type: FavoriteType.libraryRoom,
+                  title: seat.name,
+                  subtitle: seat.location,
+                  data: {
+                    'building': seat.premisesName,
+                    'floor': seat.storeyName,
+                    'totalSeats': seat.totalNum,
+                  },
+                  size: 20,
                 ),
               ],
             ),
-            const SizedBox(width: 8),
-            FavoriteButton(
-              itemId: 'library_${seat.id}',
-              type: FavoriteType.libraryRoom,
-              title: seat.name,
-              subtitle: seat.location,
-              data: {
-                'building': seat.premisesName,
-                'floor': seat.storeyName,
-                'totalSeats': seat.totalNum,
-              },
-              size: 20,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

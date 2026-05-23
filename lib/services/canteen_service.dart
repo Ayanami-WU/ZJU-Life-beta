@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../config/constants.dart';
 import '../models/canteen.dart';
 import 'http_service.dart';
@@ -22,7 +24,8 @@ class CanteenService {
     // 缓存策略：实时数据，30秒有效期，网络优先但支持离线
     final policy = CachePolicy(
       key: 'canteen_data',
-      strategy: useCache ? CacheStrategy.networkFirst : CacheStrategy.networkOnly,
+      strategy:
+          useCache ? CacheStrategy.networkFirst : CacheStrategy.networkOnly,
       ttl: const Duration(seconds: 30),
       allowStaleWhenOffline: true,
     );
@@ -35,10 +38,7 @@ class CanteenService {
         );
 
         if (cachedJson != null) {
-          final jsonData = json.decode(cachedJson);
-          if (jsonData is Map<String, dynamic>) {
-            return CanteenApiResponse.fromJson(jsonData);
-          }
+          return CanteenApiResponse.fromRawJson(cachedJson);
         }
 
         throw NetworkException('数据格式错误');
@@ -51,7 +51,9 @@ class CanteenService {
   Future<String> _fetchCanteenDataFromNetwork() async {
     // 添加时间戳防止服务器缓存
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final url = '${ApiConfig.canteenDataUrl}?t=$timestamp';
+    const baseUrl =
+        kIsWeb ? ApiConfig.localCanteenProxyUrl : ApiConfig.canteenDataUrl;
+    final url = '$baseUrl?t=$timestamp';
 
     final response = await _http.dio.get<dynamic>(
       url,
@@ -75,7 +77,7 @@ class CanteenService {
 
     throw NetworkException('数据格式错误');
   }
-  
+
   /// 按校区筛选食堂
   List<CanteenData> filterByCampus(List<CanteenData> canteens, String campus) {
     final campusKeywords = {
@@ -86,7 +88,7 @@ class CanteenService {
       'haining': ['海宁'],
       'zhoushan': ['舟山', '之江'],
     };
-    
+
     final keywords = campusKeywords[campus] ?? [];
     return canteens.where((c) {
       return keywords.any((keyword) => c.name.contains(keyword));
