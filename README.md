@@ -50,6 +50,25 @@ flutter run
 flutter run -d <device_id>
 ```
 
+### 3.1 运行 Web 开发环境
+
+Web 端的食堂和图书馆相关能力依赖本地代理，单独执行 `flutter run` 不会自动把代理一起启动。
+
+```bash
+# 同时启动本地 proxy + Flutter Web Server
+node tool/dev_web.mjs
+
+# 也可以把自定义 flutter 参数透传给脚本
+node tool/dev_web.mjs run -d chrome
+```
+
+默认情况下脚本会：
+- 启动 `tool/library_proxy.mjs`
+- 注入 `LIBRARY_PROXY_URL` 和 `CANTEEN_PROXY_URL`
+- 运行 `flutter run -d web-server --web-hostname 127.0.0.1 --web-port 8765`
+
+如果你只启动了 Flutter 而没有启动 proxy，Web 端食堂/图书馆请求会失败。
+
 ### 4. 构建发布版本
 
 ```bash
