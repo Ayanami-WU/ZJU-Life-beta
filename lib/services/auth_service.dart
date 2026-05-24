@@ -14,7 +14,17 @@ class AuthService {
   static const String _pubkeyUrl = '$_casBaseUrl/v2/getPubKey';
   static const String _bookingBaseUrl = 'https://booking.lib.zju.edu.cn';
   static const String _libraryServiceUrl = '$_bookingBaseUrl/h5/';
+  static const String _libraryCasGatewayPath = '/api/cas/cas';
+  static const String _libraryCasGatewayUrl =
+      '$_bookingBaseUrl$_libraryCasGatewayPath';
   static const String _libraryCasApi = '$_bookingBaseUrl/api/cas/user';
+  static const List<_LibraryServiceCandidate> _libraryServiceCandidates = [
+    _LibraryServiceCandidate('h5-cas', '$_bookingBaseUrl/h5/#/cas'),
+    _LibraryServiceCandidate(
+        'h5-index-cas', '$_bookingBaseUrl/h5/index.html#/cas'),
+    _LibraryServiceCandidate('h5-root', _libraryServiceUrl),
+    _LibraryServiceCandidate('h5-index', '$_bookingBaseUrl/h5/index.html'),
+  ];
 
   static String casLoginUrlForService(String service) {
     return '$_casLoginUrl?service=${Uri.encodeComponent(service)}';
@@ -212,46 +222,56 @@ class AuthService {
   /// 使用已有 CAS Cookie 为图书馆预约系统换取访问 Token。
   Future<String?> getLibraryJwt(String casCookie) async {
     try {
-      final serviceParam = Uri.encodeComponent(_libraryServiceUrl);
-      final ticketResponse = await _dio.get(
-        '$_casLoginUrl?service=$serviceParam',
-        options: Options(
-          headers: {'Cookie': casCookie},
-          followRedirects: false,
-          validateStatus: (status) => status != null && status < 500,
-        ),
+      final trimmedCookie = casCookie.trim();
+      if (trimmedCookie.isEmpty) return null;
+
+      final libraryCookies = await _loadLibraryEntryCookies();
+
+      final gatewayJwt = await _exchangeWithOfficialCasGateway(
+        trimmedCookie,
+        libraryCookies,
       );
+      if (gatewayJwt != null && gatewayJwt.isNotEmpty) {
+        return gatewayJwt;
+      }
 
-      if (ticketResponse.statusCode != 302) return null;
-
-      final location = ticketResponse.headers['location']?.first;
-      final uri = Uri.tryParse(location ?? '');
-      final ticket =
-          uri?.queryParameters['cas'] ?? uri?.queryParameters['ticket'];
-      if (ticket == null || ticket.isEmpty) return null;
-
-      return exchangeLibraryTicket(ticket);
+      return _exchangeWithServiceCandidates(trimmedCookie, libraryCookies);
     } catch (_) {
       return null;
     }
   }
 
   /// 将 CAS ticket 兑换为图书馆预约系统 Token。
-  Future<String?> exchangeLibraryTicket(String ticket) async {
+  Future<String?> exchangeLibraryTicket(
+    String ticket, {
+    String? cookies,
+    String? referer,
+  }) async {
     try {
+      final trimmedTicket = ticket.trim();
+      if (trimmedTicket.isEmpty) return null;
+
       const endpoint = kIsWeb
           ? '${ApiConfig.localLibraryProxyUrl}/api/cas/user'
           : _libraryCasApi;
+      final headers = <String, String>{
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json',
+        'Referer': referer ?? _libraryServiceUrl,
+        'Origin': _bookingBaseUrl,
+        'X-Requested-With': 'XMLHttpRequest',
+        'lang': 'zh',
+      };
+      final cookieHeader = cookies?.trim();
+      if (cookieHeader != null && cookieHeader.isNotEmpty) {
+        headers['Cookie'] = cookieHeader;
+      }
+
       final jwtResponse = await _dio.post(
         endpoint,
-        data: {'cas': ticket},
+        data: {'cas': trimmedTicket},
         options: Options(
-          headers: {
-            'Accept': 'application/json, text/plain, */*',
-            'Content-Type': 'application/json',
-            'Referer': _libraryServiceUrl,
-            'Origin': _bookingBaseUrl,
-          },
+          headers: headers,
           validateStatus: (status) => status != null && status < 500,
         ),
       );
@@ -263,8 +283,7 @@ class AuthService {
 
       if (jwtResponse.statusCode != 200) return null;
 
-      final code = data['code']?.toString();
-      if (code != null && code.isNotEmpty && code != '0' && code != '1') {
+      if (!_libraryExchangeCodeLooksOk(data['code'])) {
         return null;
       }
 
@@ -334,34 +353,328 @@ class AuthService {
     return token.length < 16 ? null : token;
   }
 
-  String _mergeCookies(String current, List<String>? setCookieHeaders) {
-    if (setCookieHeaders == null || setCookieHeaders.isEmpty) {
-      return current;
+  Future<String> _loadLibraryEntryCookies() async {
+    final response = await _dio.get(_libraryServiceUrl);
+    return _mergeCookies('', response.headers['set-cookie']);
+  }
+
+  Future<String?> _exchangeWithOfficialCasGateway(
+    String ssoCookies,
+    String libraryCookies,
+  ) async {
+    final gateway = await _requestLibraryCasGateway(
+      _mergeCookieValues([libraryCookies, ssoCookies]),
+    );
+
+    final loginPath = casLoginPathFromLocation(gateway.location);
+    if (loginPath.isEmpty) return null;
+
+    final serviceTicket = await _requestServiceTicketFromLoginPath(
+      ssoCookies,
+      loginPath,
+    );
+    if (serviceTicket.ticket.isEmpty) return null;
+
+    final callback = await _loadLibraryCallback(
+      serviceTicket.location,
+      _mergeCookieValues([gateway.cookies, ssoCookies]),
+    );
+
+    final callbackToken = _extractLibraryToken(callback.data);
+    final callbackTicket = extractTicketFromLocation(callback.location);
+    final ticket = callbackTicket ?? serviceTicket.ticket;
+    if (callbackToken != null && callbackToken.isNotEmpty) {
+      return callbackToken;
     }
 
+    return exchangeLibraryTicket(
+      ticket,
+      cookies: _mergeCookieValues([callback.cookies, ssoCookies]),
+      referer: _absoluteLibraryUrl(
+        callback.location,
+        fallback: serviceTicket.location.isNotEmpty
+            ? serviceTicket.location
+            : _libraryCasGatewayUrl,
+      ),
+    );
+  }
+
+  Future<String?> _exchangeWithServiceCandidates(
+    String ssoCookies,
+    String libraryCookies,
+  ) async {
+    for (final candidate in _libraryServiceCandidates) {
+      final serviceTicket = await _requestServiceTicket(
+        ssoCookies,
+        serviceUrl: candidate.url,
+      );
+      if (serviceTicket.ticket.isEmpty) continue;
+
+      final callbackCookies = await _loadLibraryCallbackCookies(
+        serviceTicket.location,
+        _mergeCookieValues([libraryCookies, ssoCookies]),
+      );
+
+      final libraryJwt = await exchangeLibraryTicket(
+        serviceTicket.ticket,
+        cookies: _mergeCookieValues([callbackCookies, ssoCookies]),
+        referer: serviceTicket.location.isNotEmpty
+            ? serviceTicket.location
+            : candidate.url,
+      );
+      if (libraryJwt != null && libraryJwt.isNotEmpty) {
+        return libraryJwt;
+      }
+    }
+
+    return null;
+  }
+
+  Future<_LibraryGatewayResult> _requestLibraryCasGateway(
+      String cookies) async {
+    final response = await _dio.get(
+      '$_bookingBaseUrl$_libraryCasGatewayPath',
+      options: Options(
+        headers: {
+          'Referer': _libraryServiceUrl,
+          if (cookies.isNotEmpty) 'Cookie': cookies,
+        },
+      ),
+    );
+
+    return _LibraryGatewayResult(
+      statusCode: response.statusCode ?? 0,
+      cookies: _mergeCookies(cookies, response.headers['set-cookie']),
+      location: _headerLocation(response.headers),
+    );
+  }
+
+  Future<_LibraryServiceTicketResult> _requestServiceTicket(
+    String ssoCookies, {
+    String serviceUrl = _libraryServiceUrl,
+  }) async {
+    final serviceParam = Uri.encodeComponent(serviceUrl);
+    final loginPath = '/cas/login?service=$serviceParam';
+    return _requestServiceTicketFromLoginPath(ssoCookies, loginPath);
+  }
+
+  Future<_LibraryServiceTicketResult> _requestServiceTicketFromLoginPath(
+    String ssoCookies,
+    String loginPath,
+  ) async {
+    final response = await _dio.get(
+      'https://zjuam.zju.edu.cn$loginPath',
+      options: Options(
+        headers: {'Cookie': ssoCookies},
+        followRedirects: false,
+        validateStatus: (status) => status != null && status < 500,
+      ),
+    );
+
+    final location = _headerLocation(response.headers);
+    return _LibraryServiceTicketResult(
+      statusCode: response.statusCode ?? 0,
+      location: location,
+      ticket: extractTicketFromLocation(location) ?? '',
+    );
+  }
+
+  Future<String> _loadLibraryCallbackCookies(
+    String location,
+    String libraryCookies,
+  ) async {
+    final callback = await _loadLibraryCallback(location, libraryCookies);
+    return callback.cookies;
+  }
+
+  Future<_LibraryCallbackResult> _loadLibraryCallback(
+    String location,
+    String libraryCookies,
+  ) async {
+    if (location.isEmpty) {
+      return const _LibraryCallbackResult(
+        statusCode: 0,
+        cookies: '',
+        location: '',
+        redirects: [],
+        data: null,
+      );
+    }
+
+    var nextLocation = location;
+    var cookies = libraryCookies;
+    var lastResult = _LibraryCallbackResult(
+      statusCode: 0,
+      cookies: cookies,
+      location: location,
+      redirects: const [],
+      data: null,
+    );
+
+    for (var redirectCount = 0; redirectCount < 8; redirectCount++) {
+      final url = Uri.parse(_absoluteLibraryUrl(nextLocation));
+      if (url.host != Uri.parse(_bookingBaseUrl).host) {
+        return _LibraryCallbackResult(
+          statusCode: lastResult.statusCode,
+          cookies: cookies,
+          location: url.toString(),
+          redirects: lastResult.redirects,
+          data: lastResult.data,
+        );
+      }
+
+      if (extractTicketFromLocation(url.toString()) != null &&
+          url.fragment.isNotEmpty) {
+        return _LibraryCallbackResult(
+          statusCode: lastResult.statusCode,
+          cookies: cookies,
+          location: url.toString(),
+          redirects: lastResult.redirects,
+          data: lastResult.data,
+        );
+      }
+
+      final requestUri = url.fragment.isEmpty ? url : url.replace(fragment: '');
+      final response = await _dio.getUri(
+        requestUri,
+        options: Options(
+          headers: {
+            'Referer': url.toString(),
+            if (cookies.isNotEmpty) 'Cookie': cookies,
+          },
+          followRedirects: false,
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+
+      cookies = _mergeCookies(cookies, response.headers['set-cookie']);
+      final responseLocation = _headerLocation(response.headers);
+      final absoluteLocation = responseLocation.isEmpty
+          ? ''
+          : requestUri.resolve(responseLocation).toString();
+      final redirects = absoluteLocation.isEmpty
+          ? lastResult.redirects
+          : [...lastResult.redirects, absoluteLocation];
+
+      lastResult = _LibraryCallbackResult(
+        statusCode: response.statusCode ?? 0,
+        cookies: cookies,
+        location: absoluteLocation,
+        redirects: redirects,
+        data: response.data,
+      );
+
+      if (absoluteLocation.isEmpty) return lastResult;
+      nextLocation = absoluteLocation;
+    }
+
+    return lastResult;
+  }
+
+  static String? extractTicketFromLocation(String? location) {
+    if (location == null || location.isEmpty) return null;
+    try {
+      final uri = Uri.parse(_absoluteLibraryUrl(location));
+      final queryTicket =
+          uri.queryParameters['cas'] ?? uri.queryParameters['ticket'];
+      if (queryTicket != null && queryTicket.isNotEmpty) {
+        return queryTicket;
+      }
+
+      final fragment = uri.fragment;
+      if (fragment.isEmpty) return null;
+
+      final queryStart = fragment.indexOf('?');
+      if (queryStart < 0 || queryStart >= fragment.length - 1) {
+        return null;
+      }
+
+      final hashParams =
+          Uri.splitQueryString(fragment.substring(queryStart + 1));
+      final hashTicket = hashParams['cas'] ?? hashParams['ticket'];
+      if (hashTicket == null || hashTicket.isEmpty) return null;
+      return hashTicket;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static String casLoginPathFromLocation(String? location) {
+    if (location == null || location.isEmpty) return '';
+    try {
+      final uri = Uri.parse('https://zjuam.zju.edu.cn').resolve(location);
+      if (uri.host != 'zjuam.zju.edu.cn') return '';
+      return '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  static String _absoluteLibraryUrl(
+    String? location, {
+    String fallback = _libraryServiceUrl,
+  }) {
+    if (location == null || location.isEmpty) return fallback;
+    try {
+      return Uri.parse(fallback).resolve(location).toString();
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  String _headerLocation(Headers headers) {
+    final locationHeader = headers['location'];
+    if (locationHeader == null || locationHeader.isEmpty) return '';
+    return locationHeader.first;
+  }
+
+  bool _libraryExchangeCodeLooksOk(dynamic code) {
+    if (code == null || code == '') return true;
+    final text = code.toString();
+    return text == '0' || text == '1';
+  }
+
+  String _mergeCookies(String current, List<String>? setCookieHeaders) {
     final jar = <String, String>{};
 
-    void addHeader(String header) {
-      for (final part in header.split(';')) {
-        final trimmed = part.trim();
+    void addCookiePair(String rawCookie) {
+      final trimmed = rawCookie.trim();
+      if (trimmed.isEmpty || !trimmed.contains('=')) return;
+      final index = trimmed.indexOf('=');
+      final name = trimmed.substring(0, index).trim();
+      final value = trimmed.substring(index + 1).trim();
+      if (name.isEmpty) return;
+      jar[name] = value;
+    }
+
+    if (current.isNotEmpty) {
+      for (final cookie in current.split(';')) {
+        addCookiePair(cookie);
+      }
+    }
+
+    for (final header in setCookieHeaders ?? const <String>[]) {
+      final firstCookie = header.split(';').first;
+      addCookiePair(firstCookie);
+    }
+
+    return jar.entries.map((entry) => '${entry.key}=${entry.value}').join('; ');
+  }
+
+  String _mergeCookieValues(Iterable<String?> cookieHeaders) {
+    final jar = <String, String>{};
+
+    for (final header in cookieHeaders) {
+      if (header == null || header.trim().isEmpty) continue;
+      for (final cookie in header.split(';')) {
+        final trimmed = cookie.trim();
         if (trimmed.isEmpty || !trimmed.contains('=')) continue;
         final index = trimmed.indexOf('=');
         final name = trimmed.substring(0, index).trim();
         final value = trimmed.substring(index + 1).trim();
         if (name.isEmpty) continue;
         jar[name] = value;
-        break;
       }
-    }
-
-    if (current.isNotEmpty) {
-      for (final cookie in current.split(';')) {
-        addHeader(cookie);
-      }
-    }
-
-    for (final header in setCookieHeaders) {
-      addHeader(header);
     }
 
     return jar.entries.map((entry) => '${entry.key}=${entry.value}').join('; ');
@@ -453,4 +766,51 @@ class AuthException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class _LibraryServiceCandidate {
+  final String label;
+  final String url;
+
+  const _LibraryServiceCandidate(this.label, this.url);
+}
+
+class _LibraryGatewayResult {
+  final int statusCode;
+  final String cookies;
+  final String location;
+
+  const _LibraryGatewayResult({
+    required this.statusCode,
+    required this.cookies,
+    required this.location,
+  });
+}
+
+class _LibraryServiceTicketResult {
+  final int statusCode;
+  final String location;
+  final String ticket;
+
+  const _LibraryServiceTicketResult({
+    required this.statusCode,
+    required this.location,
+    required this.ticket,
+  });
+}
+
+class _LibraryCallbackResult {
+  final int statusCode;
+  final String cookies;
+  final String location;
+  final List<String> redirects;
+  final dynamic data;
+
+  const _LibraryCallbackResult({
+    required this.statusCode,
+    required this.cookies,
+    required this.location,
+    required this.redirects,
+    required this.data,
+  });
 }
