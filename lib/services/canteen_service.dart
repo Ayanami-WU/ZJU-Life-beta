@@ -41,7 +41,10 @@ class CanteenService {
           return CanteenApiResponse.fromRawJson(cachedJson);
         }
 
-        throw NetworkException('数据格式错误');
+        throw missingCanteenDataExceptionForTesting(
+          isWeb: kIsWeb,
+          proxyUrl: ApiConfig.localCanteenProxyUrl,
+        );
       },
       context: '获取食堂数据失败',
     );
@@ -76,6 +79,28 @@ class CanteenService {
     }
 
     throw NetworkException('数据格式错误');
+  }
+
+  @visibleForTesting
+  static NetworkException missingCanteenDataExceptionForTesting({
+    required bool isWeb,
+    required String proxyUrl,
+  }) {
+    if (!isWeb) {
+      return NetworkException('网络连接失败，请连接校园网');
+    }
+
+    final normalized = proxyUrl.toLowerCase();
+    final isDefaultLocalProxy = normalized.contains('127.0.0.1:51989') ||
+        normalized.contains('localhost:51989');
+
+    if (isDefaultLocalProxy) {
+      return NetworkException(
+        '食堂本地代理未启动，请先运行 node tool/library_proxy.mjs',
+      );
+    }
+
+    return NetworkException('食堂代理不可达，请检查 CANTEEN_PROXY_URL 配置');
   }
 
   /// 按校区筛选食堂
