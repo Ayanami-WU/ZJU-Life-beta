@@ -81,6 +81,7 @@ class AuthService {
         _pubkeyUrl,
         options: Options(headers: {'Cookie': cookies}),
       );
+      cookies = _mergeCookies(cookies, pubkeyResponse.headers['set-cookie']);
 
       String encryptedPassword = password;
       if (pubkeyResponse.statusCode == 200 && pubkeyResponse.data != null) {
@@ -98,14 +99,11 @@ class AuthService {
 
       final loginResponse = await _dio.post(
         _casLoginUrl,
-        data: {
-          'username': username,
-          'password': encryptedPassword,
-          'authcode': '',
-          'execution': execution,
-          '_eventId': 'submit',
-          'geolocation': '',
-        },
+        data: _buildCasLoginFormBody(
+          username: username,
+          encryptedPassword: encryptedPassword,
+          execution: execution,
+        ),
         options: Options(
           headers: {
             'Cookie': cookies,
@@ -334,6 +332,62 @@ class AuthService {
     if (value is! String) return null;
     final token = value.trim();
     return token.length < 16 ? null : token;
+  }
+
+  String _mergeCookies(String current, List<String>? setCookieHeaders) {
+    if (setCookieHeaders == null || setCookieHeaders.isEmpty) {
+      return current;
+    }
+
+    final jar = <String, String>{};
+
+    void addHeader(String header) {
+      for (final part in header.split(';')) {
+        final trimmed = part.trim();
+        if (trimmed.isEmpty || !trimmed.contains('=')) continue;
+        final index = trimmed.indexOf('=');
+        final name = trimmed.substring(0, index).trim();
+        final value = trimmed.substring(index + 1).trim();
+        if (name.isEmpty) continue;
+        jar[name] = value;
+        break;
+      }
+    }
+
+    if (current.isNotEmpty) {
+      for (final cookie in current.split(';')) {
+        addHeader(cookie);
+      }
+    }
+
+    for (final header in setCookieHeaders) {
+      addHeader(header);
+    }
+
+    return jar.entries.map((entry) => '${entry.key}=${entry.value}').join('; ');
+  }
+
+  String _buildCasLoginFormBody({
+    required String username,
+    required String encryptedPassword,
+    required String execution,
+  }) {
+    final form = <String, String>{
+      'username': username,
+      'password': encryptedPassword,
+      'authcode': '',
+      'execution': execution,
+      '_eventId': 'submit',
+      'geolocation': '',
+      'rememberMe': 'true',
+    };
+
+    return form.entries
+        .map(
+          (entry) =>
+              '${Uri.encodeQueryComponent(entry.key)}=${Uri.encodeQueryComponent(entry.value)}',
+        )
+        .join('&');
   }
 
   String _rsaEncrypt(String password, String modulusHex, String exponentHex) {

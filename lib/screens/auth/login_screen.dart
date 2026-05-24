@@ -414,13 +414,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 16),
 
-                    if (!kIsWeb) ...[
+                    if (!kIsWeb && _errorMessage != null) ...[
                       // WebView Login Option
                       Center(
                         child: TextButton(
                           onPressed: () => context.go('/cas-auth'),
                           child: Text(
-                            '使用网页登录',
+                            '改用网页登录',
                             style: TextStyle(
                               fontSize: 14,
                               color: context.secondaryColor,
